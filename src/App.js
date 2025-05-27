@@ -1,23 +1,19 @@
-import logo from './logo.svg';
+import React from 'react';
 import './App.css';
+import ClusteredHeatmap from './ClusteredHeatmap';
 
 function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
+        <h1>Gene Expression Heatmap Visualization</h1>
       </header>
+      <main className="container mx-auto py-6 px-4">
+        <ClusteredHeatmap />
+      </main>
+      <footer className="py-4 text-center text-gray-600 text-sm">
+        Gene Expression Visualization Tool
+      </footer>
     </div>
   );
 }
