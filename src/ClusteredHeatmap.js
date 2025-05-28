@@ -238,6 +238,8 @@ const ClusteredHeatmap = () => {
       return ["Triglyceride", "Metabolism"];
     } else if (category === "Carbohydrate Metabolism") {
       return ["Carbohydrate", "Metabolism"];
+    } else if (category === "Cholesterol Metabolism") {
+      return ["Cholesterol", "Metabolism"];
     } else if (category === "Phospholipid Metabolism") {
       return ["Phospholipid", "Metabolism"];
     } else if (category === "RNA Processing/Neurodegeneration") {
