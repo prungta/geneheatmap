@@ -513,14 +513,21 @@ const renderHeatmap = () => {
       <div className="mb-6 p-4 border rounded bg-gray-50">
         <h3 className="font-bold mb-2">Upload Excel File</h3>
         <p className="text-sm mb-2">
-          Upload your Excel file with gene expression data. The file should include:
-        </p>
-        <ul className="text-sm list-disc pl-6 mb-4">
-          <li>Gene ID column</li>
-          <li>Log2FC comparison columns</li>
-          <li>P-value columns</li>
-          <li>All Gene Ontology Category column</li>
-        </ul>
+  Please upload an Excel spreadsheet (<strong>.xlsx</strong> or <strong>.xls</strong>) containing your gene expression data. Your file must include the following columns (column order does not matter):
+</p>
+<ul className="text-sm list-disc pl-6 mb-2">
+  <li><strong>Gene ID</strong> &mdash; Unique identifier for each gene (e.g., ENSG0000012345)</li>
+  <li><strong>Log2FC (Condition Name)</strong> &mdash; Log2 fold change for each comparison. The column header should be in the format <code>Log2FC (Comparison Name)</code> (e.g., <code>Log2FC (Control vs KD)</code>)</li>
+  <li><strong>P value (Condition Name)</strong> &mdash; P-value for each comparison. The column header should be in the format <code>P value (Comparison Name)</code> (e.g., <code>P value (Control vs KD)</code>)</li>
+  <li><strong>All Gene Ontology Category</strong> &mdash; Category or pathway for each gene (e.g., "Triglyceride Metabolism")</li>
+</ul>
+<p className="text-xs text-gray-600 mb-2">
+  <strong>Example of required column headers:</strong><br/>
+  <code>Gene ID</code>, <code>All Gene Ontology Category</code>, <code>Log2FC (Control vs KD)</code>, <code>P value (Control vs KD)</code>, <code>Log2FC (KD vs Rescue)</code>, <code>P value (KD vs Rescue)</code>, ...
+</p>
+<p className="text-xs text-gray-600 mb-4">
+  You may include additional columns if you wish. The app will automatically detect all comparisons and p-value columns based on their headers.
+</p>
         <input 
           type="file" 
           accept=".xlsx, .xls" 
