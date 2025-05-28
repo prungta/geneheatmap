@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import * as d3 from 'd3';
 import * as XLSX from 'xlsx';
-import { Card, Typography, Button, Box, Grid, Tooltip, Divider, Paper } from '@mui/material';
+import { Card, Typography, Button, Box, Grid, Paper } from '@mui/material';
 
 const ClusteredHeatmap = () => {
   const [data, setData] = useState(null);
