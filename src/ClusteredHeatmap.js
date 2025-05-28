@@ -44,6 +44,9 @@ const ClusteredHeatmap = () => {
       // Find all p-value columns
       const pValueColumns = headers.filter(h => pValuePattern.test(h));
       
+      // Dynamically determine the category column
+      const categoryCol = headers.find(h => h.toLowerCase().includes('category'));
+      
       // Sort comparisons and p-values by their order in the file
       // (Optional: you can sort by display name if you prefer)
       // If you want to pair Log2FC and P value columns by their inner comparison, you can add extra logic here.
@@ -52,7 +55,7 @@ const ClusteredHeatmap = () => {
       const geneData = rawData.map(gene => {
         return {
           id: gene['Gene ID'],
-          category: gene['All Gene Ontology Category'] || 'Uncategorized',
+          category: gene[categoryCol] || 'Uncategorized',
           values: comparisons.map(comp => gene[comp]),
           pValues: pValueColumns.map(comp => gene[comp])
         };
