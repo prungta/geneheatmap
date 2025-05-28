@@ -340,7 +340,7 @@ const renderHeatmap = () => {
   return (
     <div style={{ width: '100%', overflowX: 'auto', paddingTop: '20px' }} ref={exportContainerRef}>
       {/* Color scale dropdown */}
-      <div style={{marginBottom:8}}>
+      <div style={{marginBottom:8, display:'flex', alignItems:'center', justifyContent:'center', position:'relative'}}>
         <label style={{marginRight:8}}>Color Scale:</label>
         <select value={colorScaleType} onChange={e => setColorScaleType(e.target.value)}>
           <option value="linear">Linear</option>
@@ -349,6 +349,44 @@ const renderHeatmap = () => {
         </select>
         <button style={{marginLeft:16}} onClick={exportSelection} disabled={!selectedCells.length}>Export Selection</button>
         <span style={{marginLeft:16, fontSize:12, color:'#666'}}>{selectedCells.length} selected</span>
+      </div>
+      <div style={{
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+        margin: '0 auto 18px auto', maxWidth: 500, background: '#f9f9fc', border: '1px solid #dbeafe',
+        borderRadius: 8, padding: '14px 20px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', fontSize: 14
+      }}>
+        <div style={{fontWeight:'bold', marginBottom: 6, color:'#1976d2'}}>What do the color scales mean?</div>
+        <table style={{width:'100%', borderCollapse:'collapse', marginBottom:8, fontSize:13}}>
+          <thead>
+            <tr style={{background:'#f1f5fa'}}>
+              <th style={{border:'1px solid #e5e7eb', padding:'2px 6px'}}>Scale</th>
+              <th style={{border:'1px solid #e5e7eb', padding:'2px 6px'}}>Best for...</th>
+              <th style={{border:'1px solid #e5e7eb', padding:'2px 6px'}}>Effect</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style={{border:'1px solid #e5e7eb', padding:'2px 6px'}}>Linear</td>
+              <td style={{border:'1px solid #e5e7eb', padding:'2px 6px'}}>Evenly distributed data</td>
+              <td style={{border:'1px solid #e5e7eb', padding:'2px 6px'}}>Proportional color mapping, outliers dominate</td>
+            </tr>
+            <tr>
+              <td style={{border:'1px solid #e5e7eb', padding:'2px 6px'}}>Log</td>
+              <td style={{border:'1px solid #e5e7eb', padding:'2px 6px'}}>Wide range, outliers present</td>
+              <td style={{border:'1px solid #e5e7eb', padding:'2px 6px'}}>Compresses large values, reveals subtle changes</td>
+            </tr>
+            <tr>
+              <td style={{border:'1px solid #e5e7eb', padding:'2px 6px'}}>Quantile</td>
+              <td style={{border:'1px solid #e5e7eb', padding:'2px 6px'}}>Skewed data, relative ranking</td>
+              <td style={{border:'1px solid #e5e7eb', padding:'2px 6px'}}>Balanced color usage, highlights rankings</td>
+            </tr>
+          </tbody>
+        </table>
+        <div style={{fontSize:12, color:'#444'}}>
+          <b>Linear:</b> Maps values directly to color. Best for proportional differences.<br/>
+          <b>Log:</b> Log-transform compresses large values, expands small ones. Reveals subtle changes.<br/>
+          <b>Quantile:</b> Divides data into equal-sized groups. Highlights rankings, not absolute differences.
+        </div>
       </div>
       <svg width={width} height={height} ref={svgRef}>
         <g className="heatmap-zoomable" transform={`translate(${margin.left}, ${margin.top})`}>
