@@ -29,29 +29,24 @@ const ClusteredHeatmap = () => {
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
       const rawData = XLSX.utils.sheet_to_json(sheet);
       
-      // Define the comparisons
-      const comparisons = [
-        'Log2FC (control vs knockdown)',
-        'Log2FC (knockdown vs knockdown+drug)',
-        'Log2FC (control vs control+drug)',
-        'Log2FC (control+drug vs knockdown+drug)'
-      ];
+      // Dynamically detect comparison and p-value columns from the headers
+      const headers = Object.keys(rawData[0] || {});
+      const comparisonPattern = /^Log2FC\s*\((.+)\)$/i;
+      const pValuePattern = /^P value\s*\((.+)\)$/i;
       
-      // Short names for the comparisons
-      const shortNames = [
-        'Control vs KD',
-        'KD vs KD+Drug',
-        'Control vs Control+Drug',
-        'Control+Drug vs KD+Drug'
-      ];
+      // Find all comparison columns and their display names
+      const comparisons = headers.filter(h => comparisonPattern.test(h));
+      const shortNames = comparisons.map(h => {
+        const match = h.match(comparisonPattern);
+        return match ? match[1].trim() : h;
+      });
       
-      // P-value columns
-      const pValueColumns = [
-        'P value (control vs knockdown)',
-        'P value (knockdown vs knockdown+drug)',
-        'P value (control vs control+drug)',
-        'P value (control+drug vs knockdown+drug)'
-      ];
+      // Find all p-value columns
+      const pValueColumns = headers.filter(h => pValuePattern.test(h));
+      
+      // Sort comparisons and p-values by their order in the file
+      // (Optional: you can sort by display name if you prefer)
+      // If you want to pair Log2FC and P value columns by their inner comparison, you can add extra logic here.
       
       // Process gene data
       const geneData = rawData.map(gene => {
@@ -118,6 +113,8 @@ const ClusteredHeatmap = () => {
       setData({
         genes: sortedGeneData,
         comparisons: shortNames,
+        comparisonColumns: comparisons,
+        pValueColumns: pValueColumns,
         categoryGroups: categoryGroups
       });
       
