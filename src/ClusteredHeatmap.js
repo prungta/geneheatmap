@@ -7,8 +7,34 @@ const ClusteredHeatmap = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [file, setFile] = useState(null);
+  const [colorScaleType, setColorScaleType] = useState('linear'); // linear, log, quantile
+  const [selectedCells, setSelectedCells] = useState([]); // [{row, col}]
+  const [tooltip, setTooltip] = useState({ visible: false, x: 0, y: 0, content: null });
   const svgRef = useRef(null);
   const exportContainerRef = useRef(null);
+
+
+  // Enhanced color scale
+  const colorScale = (value) => {
+    if (value === undefined || value === null) return "#f9f9f9";
+    let v = value;
+    if (colorScaleType === 'log') {
+      v = value === 0 ? 0 : (value > 0 ? Math.log2(Math.abs(value) + 1) : -Math.log2(Math.abs(value) + 1));
+    } else if (colorScaleType === 'quantile' && data) {
+      // Quantile scaling based on all values
+      const allVals = data.genes.flatMap(g => g.values);
+      const scale = d3.scaleQuantile().domain(allVals).range(d3.schemeRdBu[7].reverse());
+      return scale(value);
+    }
+    if (v > 0) {
+      const intensity = Math.min(Math.abs(v) / 3, 1);
+      return d3.interpolateReds(intensity);
+    } else {
+      const intensity = Math.min(Math.abs(v) / 3, 1);
+      return d3.interpolateBlues(intensity);
+    }
+  };
+
 
   // Handle file upload
   const handleFileUpload = (event) => {
@@ -196,19 +222,7 @@ const ClusteredHeatmap = () => {
   const cellHeight = 30;
   const margin = { top: 100, right: 200, bottom: 50, left: 200 }; // Increased right margin to prevent legend clipping
 
-  // Color scale for heatmap - using d3 color interpolation
-  const colorScale = (value) => {
-    if (value === undefined || value === null) return "#f9f9f9";
-    if (value > 0) {
-      // Red for upregulation (0 to 3)
-      const intensity = Math.min(Math.abs(value) / 3, 1);
-      return d3.interpolateReds(intensity);
-    } else {
-      // Blue for downregulation (0 to -3)
-      const intensity = Math.min(Math.abs(value) / 3, 1);
-      return d3.interpolateBlues(intensity);
-    }
-  };
+
 
   // Significance indicator size scale
   const getSizeForPValue = (pValue) => {
@@ -242,6 +256,57 @@ const measureTextWidth = (text, font = '11px Arial') => {
 
 const renderHeatmap = () => {
   if (!data) return null;
+  // Tooltip handler
+  const handleMouseOver = (event, gene, j, i) => {
+    setTooltip({
+      visible: true,
+      x: event.clientX,
+      y: event.clientY,
+      content: (
+        <div style={{fontSize:'12px'}}>
+          <b>Gene:</b> {gene.id}<br/>
+          <b>Category:</b> {gene.category}<br/>
+          <b>Comparison:</b> {data.comparisons[j]}<br/>
+          <b>Log2FC:</b> {gene.values[j] !== undefined && gene.values[j] !== null ? gene.values[j].toFixed(2) : 'N/A'}<br/>
+          <b>P-value:</b> {gene.pValues[j] !== undefined && gene.pValues[j] !== null ? gene.pValues[j].toExponential(2) : 'N/A'}
+        </div>
+      )
+    });
+  };
+  const handleMouseOut = () => setTooltip({ ...tooltip, visible: false });
+  // Selection handler
+  const handleCellClick = (i, j) => {
+    const idx = selectedCells.findIndex(c => c.row === i && c.col === j);
+    if (idx >= 0) {
+      setSelectedCells(selectedCells.filter((_, k) => k !== idx));
+    } else {
+      setSelectedCells([...selectedCells, { row: i, col: j }]);
+    }
+  };
+  // Export selected cluster
+  const exportSelection = () => {
+    if (!selectedCells.length) return;
+    const selectedGenes = Array.from(new Set(selectedCells.map(c => data.genes[c.row].id)));
+    const rows = data.genes.filter((g, i) => selectedGenes.includes(g.id));
+    const headers = ["Gene ID", "Category", ...data.comparisons.map(name => `Log2FC (${name})`), ...data.comparisons.map(name => `P-value (${name})`)];
+    const outRows = rows.map(gene => {
+      const log2fc = gene.values.map(v => v !== undefined && v !== null ? v : "N/A");
+      const pvals = gene.pValues.map(v => v !== undefined && v !== null ? v : "N/A");
+      const obj = { "Gene ID": gene.id, "Category": gene.category };
+      data.comparisons.forEach((name, i) => {
+        obj[`Log2FC (${name})`] = log2fc[i];
+        obj[`P-value (${name})`] = pvals[i];
+      });
+      return obj;
+    });
+    const worksheet = window.XLSX ? window.XLSX.utils.json_to_sheet(outRows, { header: headers }) : XLSX.utils.json_to_sheet(outRows, { header: headers });
+    const workbook = window.XLSX ? window.XLSX.utils.book_new() : XLSX.utils.book_new();
+    (window.XLSX ? window.XLSX.utils : XLSX.utils).book_append_sheet(workbook, worksheet, "Selection");
+    (window.XLSX ? window.XLSX : XLSX).writeFile(workbook, "selected_cluster.xlsx");
+  };
+
+  // ... rest of the function unchanged ...
+  if (!data) return null;
 
   // Compute dynamic column widths, then use the largest for all columns
   const headerFont = 'bold 11px Arial';
@@ -274,9 +339,20 @@ const renderHeatmap = () => {
 
   return (
     <div style={{ width: '100%', overflowX: 'auto', paddingTop: '20px' }} ref={exportContainerRef}>
+      {/* Color scale dropdown */}
+      <div style={{marginBottom:8}}>
+        <label style={{marginRight:8}}>Color Scale:</label>
+        <select value={colorScaleType} onChange={e => setColorScaleType(e.target.value)}>
+          <option value="linear">Linear</option>
+          <option value="log">Log</option>
+          <option value="quantile">Quantile</option>
+        </select>
+        <button style={{marginLeft:16}} onClick={exportSelection} disabled={!selectedCells.length}>Export Selection</button>
+        <span style={{marginLeft:16, fontSize:12, color:'#666'}}>{selectedCells.length} selected</span>
+      </div>
       <svg width={width} height={height} ref={svgRef}>
-          <g transform={`translate(${margin.left}, ${margin.top})`}>
-            {/* Column Headers (Comparisons) */}
+        <g className="heatmap-zoomable" transform={`translate(${margin.left}, ${margin.top})`}>
+          {/* Column Headers (Comparisons) */}
             {data.comparisons.map((comparison, j) => (
   <g key={`col-${j}`} transform={`translate(${colX[j]}, 0)`}>
     <text
@@ -430,8 +506,12 @@ const renderHeatmap = () => {
         width={colWidths[j] - 1}
         height={cellHeight - 1}
         fill={colorScale(value)}
-        stroke="#fff"
-        strokeWidth="1"
+        stroke={selectedCells.some(c => c.row === i && c.col === j) ? "#ff9800" : "#fff"}
+        strokeWidth={selectedCells.some(c => c.row === i && c.col === j) ? 3 : 1}
+        style={{cursor:'pointer'}}
+        onClick={() => handleCellClick(i, j)}
+        onMouseOver={e => handleMouseOver(e, gene, j, i)}
+        onMouseOut={handleMouseOut}
       />
       <text
         x={colWidths[j] / 2}
@@ -580,6 +660,23 @@ const renderHeatmap = () => {
             <p>• This visualization helps identify coordinated regulation within functional pathways</p>
           </div>
         </>
+      )}
+    {/* Tooltip overlay */}
+      {tooltip.visible && (
+        <div style={{
+          position: 'fixed',
+          left: tooltip.x + 10,
+          top: tooltip.y + 10,
+          background: 'rgba(255,255,255,0.98)',
+          border: '1px solid #ccc',
+          borderRadius: 6,
+          padding: 8,
+          pointerEvents: 'none',
+          zIndex: 10000,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
+        }}>
+          {tooltip.content}
+        </div>
       )}
     </div>
   );
