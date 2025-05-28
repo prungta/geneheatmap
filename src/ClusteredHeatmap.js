@@ -240,11 +240,12 @@ const measureTextWidth = (text, font = '11px Arial') => {
 const renderHeatmap = () => {
   if (!data) return null;
 
-  // Compute dynamic column widths
+  // Compute dynamic column widths, then use the largest for all columns
   const headerFont = 'bold 11px Arial';
   const cellFont = '10px Arial';
   const minColWidth = 50;
-  const colWidths = data.comparisons.map((comparison, j) => {
+  // Calculate individual column widths
+  const colWidthsRaw = data.comparisons.map((comparison, j) => {
     let maxWidth = measureTextWidth(comparison, headerFont);
     data.genes.forEach(gene => {
       const value = gene.values[j];
@@ -254,6 +255,10 @@ const renderHeatmap = () => {
     // Add padding
     return Math.ceil(Math.max(maxWidth + 18, minColWidth));
   });
+  // Find the maximum width
+  const maxColWidth = Math.max(...colWidthsRaw);
+  // Use the maximum width for all columns
+  const colWidths = data.comparisons.map(() => maxColWidth);
 
   // Compute x positions for each column
   const colX = colWidths.reduce((acc, w, i) => {
