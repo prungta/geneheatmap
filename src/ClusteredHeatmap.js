@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import * as d3 from 'd3';
 import * as XLSX from 'xlsx';
+import { Card, Typography, Button, Box, Grid, Tooltip, Divider, Paper } from '@mui/material';
 
 const ClusteredHeatmap = () => {
   const [data, setData] = useState(null);
@@ -263,13 +264,13 @@ const renderHeatmap = () => {
       x: event.clientX,
       y: event.clientY,
       content: (
-        <div style={{fontSize:'12px'}}>
+        <Box sx={{ fontSize: 13 }}>
           <b>Gene:</b> {gene.id}<br/>
           <b>Category:</b> {gene.category}<br/>
           <b>Comparison:</b> {data.comparisons[j]}<br/>
           <b>Log2FC:</b> {gene.values[j] !== undefined && gene.values[j] !== null ? gene.values[j].toFixed(2) : 'N/A'}<br/>
           <b>P-value:</b> {gene.pValues[j] !== undefined && gene.pValues[j] !== null ? gene.pValues[j].toExponential(2) : 'N/A'}
-        </div>
+        </Box>
       )
     });
   };
@@ -391,213 +392,192 @@ const renderHeatmap = () => {
       <svg width={width} height={height} ref={svgRef}>
         <g className="heatmap-zoomable" transform={`translate(${margin.left}, ${margin.top})`}>
           {/* Column Headers (Comparisons) */}
-            {data.comparisons.map((comparison, j) => (
-  <g key={`col-${j}`} transform={`translate(${colX[j]}, 0)`}>
-    <text
-      x={colWidths[j] / 2}
-      y={-20}
-      textAnchor="middle"
-      fontWeight="bold"
-      fontSize="11px"
-    >
-      {comparison}
-    </text>
-  </g>
-))} 
-            
-            {/* Legend - moved up slightly */}
-            <g transform={`translate(0, ${-75})`}>
-              <text x={0} y={0} fontWeight="bold" fontSize="13px">Legend:</text>
-              
-              {/* Color legend */}
-              <g transform="translate(70, 0)">
-                {[-3, -2, -1, 0, 1, 2, 3].map((value, i) => (
-                  <g key={`legend-${i}`} transform={`translate(${i * 35}, 0)`}>
+          {data.comparisons.map((comparison, j) => (
+            <g key={`col-${j}`} transform={`translate(${colX[j]}, 0)`}>
+              <text
+                x={colWidths[j] / 2}
+                y={-20}
+                textAnchor="middle"
+                fontWeight="bold"
+                fontSize="11px"
+              >
+                {comparison}
+              </text>
+            </g>
+          ))}
+          {/* Legend - moved up slightly */}
+          <g transform={`translate(0, ${-75})`}>
+            <text x={0} y={0} fontWeight="bold" fontSize="13px">Legend:</text>
+            {/* Color legend */}
+            <g transform="translate(70, 0)">
+              {[-3, -2, -1, 0, 1, 2, 3].map((value, i) => (
+                <g key={`legend-${i}`} transform={`translate(${i * 35}, 0)`}>
+                  <rect
+                    width={30}
+                    height={15}
+                    fill={value < 0 ? d3.interpolateBlues(Math.abs(value)/3) : 
+                          value > 0 ? d3.interpolateReds(Math.abs(value)/3) : "#f9f9f9"}
+                    stroke="#ccc"
+                    strokeWidth="0.5"
+                  />
+                  <text
+                    x={15}
+                    y={30}
+                    textAnchor="middle"
+                    fontSize="10px"
+                  >
+                    {value}
+                  </text>
+                </g>
+              ))}
+              <text x={120} y={-5} fontSize="11px">Log₂ Fold Change</text>
+            </g>
+            {/* Significance legend */}
+            <g transform="translate(350, 0)">
+              <text x={0} y={0} fontSize="11px">p-value:</text>
+              <circle cx={60} cy={-4} r={5} fill="black" opacity={0.8} />
+              <text x={70} y={0} fontSize="11px">p &lt; 0.01</text>
+              <circle cx={130} cy={-4} r={3} fill="black" opacity={0.8} />
+              <text x={140} y={0} fontSize="11px">p &lt; 0.05</text>
+            </g>
+          </g>
+          {/* Category groups */}
+          {data.categoryGroups.map((group, groupIndex) => {
+            const groupY = group.startIndex * cellHeight;
+            // Color code the category groups
+            let groupColor = "#f0f0f0"; // default light gray
+            if (group.category.includes("Cholesterol")) {
+              groupColor = "#e6f7ff"; // light blue
+            } else if (group.category.includes("Fatty Acid")) {
+              groupColor = "#e6ffe6"; // light green
+            } else if (group.category.includes("Triglyceride")) {
+              groupColor = "#fff2e6"; // light orange
+            } else if (group.category.includes("Immune")) {
+              groupColor = "#ffe6e6"; // light red
+            } else if (group.category.includes("Carbohydrate")) {
+              groupColor = "#f9f9e6"; // light yellow
+            }
+            const categoryLines = formatCategoryLabel(group.category);
+            return (
+              <g key={`group-${groupIndex}`}>
+                {/* Group background and label */}
+                <rect
+                  x={-margin.left}
+                  y={groupY}
+                  width={margin.left - 5}
+                  height={group.count * cellHeight}
+                  fill={groupColor}
+                  stroke="#ccc"
+                />
+                {/* Render category with line breaks if needed */}
+                {categoryLines.map((line, lineIndex) => (
+                  <text
+                    key={`category-line-${lineIndex}`}
+                    x={-margin.left + 5}
+                    y={groupY + 15 + (lineIndex * 15)}
+                    fontWeight="bold"
+                    fontSize="12px"
+                    fill="#333"
+                  >
+                    {line}
+                  </text>
+                ))}
+                <text
+                  x={-margin.left + 5}
+                  y={groupY + 15 + (categoryLines.length * 15)}
+                  fontSize="10px"
+                  fill="#666"
+                >
+                  ({group.count} genes)
+                </text>
+                {/* Group separator */}
+                {groupIndex > 0 && (
+                  <line
+                    x1={-margin.left}
+                    y1={groupY - 2}
+                    x2={totalColsWidth}
+                    y2={groupY - 2}
+                    stroke="#000"
+                    strokeWidth="1"
+                    strokeDasharray="5,5"
+                  />
+                )}
+              </g>
+            );
+          })}
+          {/* Gene cells */}
+          {data.genes.map((gene, i) => (
+            <g key={`row-${i}`} transform={`translate(0, ${i * cellHeight})`}>
+              {/* Gene names */}
+              <text
+                x={-15}
+                y={cellHeight / 2 + 5}
+                textAnchor="end"
+                fontSize="11px"
+              >
+                {gene.id}
+              </text>
+              {/* Gene expression cells */}
+              {gene.values.map((value, j) => {
+                const pValue = gene.pValues[j];
+                const isSignificant = pValue < 0.05;
+                const isMarginal = pValue >= 0.05 && pValue < 0.1;
+                const circleRadius = isSignificant ? getSizeForPValue(pValue) : (isMarginal ? 2 : 0);
+                return (
+                  <g key={`cell-${i}-${j}`} transform={`translate(${colX[j]}, 0)`}>
                     <rect
-                      width={30}
-                      height={15}
-                      fill={value < 0 ? d3.interpolateBlues(Math.abs(value)/3) : 
-                            value > 0 ? d3.interpolateReds(Math.abs(value)/3) : "#f9f9f9"}
-                      stroke="#ccc"
-                      strokeWidth="0.5"
+                      width={colWidths[j] - 1}
+                      height={cellHeight - 1}
+                      fill={colorScale(value)}
+                      stroke={selectedCells.some(c => c.row === i && c.col === j) ? "#ff9800" : "#fff"}
+                      strokeWidth={selectedCells.some(c => c.row === i && c.col === j) ? 3 : 1}
+                      style={{cursor:'pointer'}}
+                      onClick={() => handleCellClick(i, j)}
+                      onMouseOver={e => handleMouseOver(e, gene, j, i)}
+                      onMouseOut={handleMouseOut}
                     />
                     <text
-                      x={15}
-                      y={30}
+                      x={colWidths[j] / 2}
+                      y={cellHeight / 2 + 4}
                       textAnchor="middle"
                       fontSize="10px"
+                      fontWeight={isSignificant ? "bold" : "normal"}
+                      fill={Math.abs(value) > 1.5 ? "white" : "black"}
                     >
-                      {value}
+                      {value !== undefined && value !== null ? value.toFixed(1) : "N/A"}
                     </text>
+                    {(isSignificant || isMarginal) && (
+                      <circle
+                        cx={colWidths[j] - 15}
+                        cy={cellHeight / 2}
+                        r={circleRadius}
+                        fill={isSignificant ? "black" : "#888"}
+                        opacity={0.8}
+                      />
+                    )}
                   </g>
-                ))}
-                <text x={120} y={-5} fontSize="11px">Log₂ Fold Change</text>
-              </g>
-              
-              {/* Significance legend */}
-              <g transform="translate(350, 0)">
-                <text x={0} y={0} fontSize="11px">p-value:</text>
-                <circle cx={60} cy={-4} r={5} fill="black" opacity={0.8} />
-                <text x={70} y={0} fontSize="11px">p &lt; 0.01</text>
-                <circle cx={130} cy={-4} r={3} fill="black" opacity={0.8} />
-                <text x={140} y={0} fontSize="11px">p &lt; 0.05</text>
-              </g>
+                );
+              })}
             </g>
-            
-            {/* Category groups */}
-            {data.categoryGroups.map((group, groupIndex) => {
-              const groupY = group.startIndex * cellHeight;
-              
-              // Color code the category groups
-              let groupColor = "#f0f0f0"; // default light gray
-              
-              // Different colors for different biological processes
-              if (group.category.includes("Cholesterol")) {
-                groupColor = "#e6f7ff"; // light blue
-              } else if (group.category.includes("Fatty Acid")) {
-                groupColor = "#e6ffe6"; // light green
-              } else if (group.category.includes("Triglyceride")) {
-                groupColor = "#fff2e6"; // light orange
-              } else if (group.category.includes("Immune")) {
-                groupColor = "#ffe6e6"; // light red
-              } else if (group.category.includes("Carbohydrate")) {
-                groupColor = "#f9f9e6"; // light yellow
-              }
-              
-              // Format category label with line breaks if needed
-              const categoryLines = formatCategoryLabel(group.category);
-              
-              return (
-                <g key={`group-${groupIndex}`}>
-                  {/* Group background and label */}
-                  <rect
-                    x={-margin.left}
-                    y={groupY}
-                    width={margin.left - 5}
-                    height={group.count * cellHeight}
-                    fill={groupColor}
-                    stroke="#ccc"
-                  />
-                  
-                  {/* Render category with line breaks if needed */}
-                  {categoryLines.map((line, lineIndex) => (
-                    <text
-                      key={`category-line-${lineIndex}`}
-                      x={-margin.left + 5}
-                      y={groupY + 15 + (lineIndex * 15)}
-                      fontWeight="bold"
-                      fontSize="12px"
-                      fill="#333"
-                    >
-                      {line}
-                    </text>
-                  ))}
-                  
-                  <text
-                    x={-margin.left + 5}
-                    y={groupY + 15 + (categoryLines.length * 15)}
-                    fontSize="10px"
-                    fill="#666"
-                  >
-                    ({group.count} genes)
-                  </text>
-                  
-                  {/* Group separator */}
-                  {groupIndex > 0 && (
-                    <line
-                      x1={-margin.left}
-                      y1={groupY - 2}
-                      x2={totalColsWidth}
-                      y2={groupY - 2}
-                      stroke="#000"
-                      strokeWidth="1"
-                      strokeDasharray="5,5"
-                    />
-                  )}
-                </g>
-              );
-            })}
-            
-            {/* Gene cells */}
-            {data.genes.map((gene, i) => (
-              <g key={`row-${i}`} transform={`translate(0, ${i * cellHeight})`}>
-                {/* Gene names */}
-                <text
-                  x={-15}
-                  y={cellHeight / 2 + 5}
-                  textAnchor="end"
-                  fontSize="11px"
-                >
-                  {gene.id}
-                </text>
-                
-                {/* Gene expression cells */}
-                {gene.values.map((value, j) => {
-  const pValue = gene.pValues[j];
-  const isSignificant = pValue < 0.05;
-  const isMarginal = pValue >= 0.05 && pValue < 0.1;
-  const circleRadius = isSignificant ? getSizeForPValue(pValue) : (isMarginal ? 2 : 0);
-
-  return (
-    <g key={`cell-${i}-${j}`} transform={`translate(${colX[j]}, 0)`}>
-      <rect
-        width={colWidths[j] - 1}
-        height={cellHeight - 1}
-        fill={colorScale(value)}
-        stroke={selectedCells.some(c => c.row === i && c.col === j) ? "#ff9800" : "#fff"}
-        strokeWidth={selectedCells.some(c => c.row === i && c.col === j) ? 3 : 1}
-        style={{cursor:'pointer'}}
-        onClick={() => handleCellClick(i, j)}
-        onMouseOver={e => handleMouseOver(e, gene, j, i)}
-        onMouseOut={handleMouseOut}
-      />
-      <text
-        x={colWidths[j] / 2}
-        y={cellHeight / 2 + 4}
-        textAnchor="middle"
-        fontSize="10px"
-        fontWeight={isSignificant ? "bold" : "normal"}
-        fill={Math.abs(value) > 1.5 ? "white" : "black"}
-      >
-        {value !== undefined && value !== null ? value.toFixed(1) : "N/A"}
-      </text>
-      {(isSignificant || isMarginal) && (
-        <circle
-          cx={colWidths[j] - 15}
-          cy={cellHeight / 2}
-          r={circleRadius}
-          fill={isSignificant ? "black" : "#888"}
-          opacity={0.8}
-        />
-      )}
-    </g>
+          ))}
+        </g>
+      </svg>
+    </div>
   );
-})} 
-              </g>
-            ))}
-          </g>
-        </svg>
-      </div>
-    );
-  };
+}
 
-  // Function to export processed data as XLSX
+  // Download all processed data as XLSX
   const downloadProcessedData = () => {
     if (!data) return;
-
-    // Prepare the header
     const headers = [
       "Gene ID",
       "Category",
       ...data.comparisons.map(name => `Log2FC (${name})`),
       ...data.comparisons.map(name => `P-value (${name})`)
     ];
-
-    // Prepare the rows
-    const rows = data.genes.map(gene => {
+    const outRows = data.genes.map(gene => {
       const log2fc = gene.values.map(v => v !== undefined && v !== null ? v : "N/A");
       const pvals = gene.pValues.map(v => v !== undefined && v !== null ? v : "N/A");
-      // Build an object with all fields
       const obj = {
         "Gene ID": gene.id,
         "Category": gene.category
@@ -608,116 +588,137 @@ const renderHeatmap = () => {
       });
       return obj;
     });
-
-    // Convert to worksheet
-    const worksheet = window.XLSX
-      ? window.XLSX.utils.json_to_sheet(rows, { header: headers })
-      : XLSX.utils.json_to_sheet(rows, { header: headers });
-    const workbook = window.XLSX
-      ? window.XLSX.utils.book_new()
-      : XLSX.utils.book_new();
+    const worksheet = window.XLSX ? window.XLSX.utils.json_to_sheet(outRows, { header: headers }) : XLSX.utils.json_to_sheet(outRows, { header: headers });
+    const workbook = window.XLSX ? window.XLSX.utils.book_new() : XLSX.utils.book_new();
     (window.XLSX ? window.XLSX.utils : XLSX.utils).book_append_sheet(workbook, worksheet, "Processed Data");
-
-    // Download
     (window.XLSX ? window.XLSX : XLSX).writeFile(workbook, "processed_gene_data.xlsx");
   };
 
   return (
-    <div className="p-4 bg-white overflow-auto">
-      <h2 className="text-xl font-bold mb-2 text-center">Clustered Heatmap of Gene Expression by Biological Process</h2>
-      <p className="text-sm text-center mb-4">Visualization of log2 fold changes across four experimental conditions</p>
-      
-      {/* File upload section */}
-      <div className="mb-6 p-4 border rounded bg-gray-50">
-        <h3 className="font-bold mb-2">Upload Excel File</h3>
-        <p className="text-sm mb-2">
-  Please upload an Excel spreadsheet (<strong>.xlsx</strong> or <strong>.xls</strong>) containing your gene expression data. Your file must include the following columns (column order does not matter):
-</p>
-<ul className="text-sm list-disc pl-6 mb-2">
-  <li><strong>Gene ID</strong> &mdash; Unique identifier for each gene (e.g., ENSG0000012345)</li>
-  <li><strong>Log2FC (Condition Name)</strong> &mdash; Log2 fold change for each comparison. The column header should be in the format <code>Log2FC (Comparison Name)</code> (e.g., <code>Log2FC (Control vs KD)</code>)</li>
-  <li><strong>P value (Condition Name)</strong> &mdash; P-value for each comparison. The column header should be in the format <code>P value (Comparison Name)</code> (e.g., <code>P value (Control vs KD)</code>)</li>
-  <li><strong>All Gene Ontology Category</strong> &mdash; Category or pathway for each gene (e.g., "Triglyceride Metabolism")</li>
-</ul>
-<p className="text-xs text-gray-600 mb-2">
-  <strong>Example of required column headers:</strong><br/>
-  <code>Gene ID</code>, <code>All Gene Ontology Category</code>, <code>Log2FC (Control vs KD)</code>, <code>P value (Control vs KD)</code>, <code>Log2FC (KD vs Rescue)</code>, <code>P value (KD vs Rescue)</code>, ...
-</p>
-<p className="text-xs text-gray-600 mb-4">
-  You may include additional columns if you wish. The app will automatically detect all comparisons and p-value columns based on their headers.
-</p>
-        <input 
-          type="file" 
-          accept=".xlsx, .xls" 
-          onChange={handleFileUpload}
-          className="block w-full text-sm border border-gray-300 rounded p-2"
-        />
-        {file && <p className="mt-2 text-sm text-blue-600">Using file: {file.name}</p>}
-      </div>
-      
-      {loading && <div className="p-8 text-center">Loading gene expression data...</div>}
-      
-      {error && <div className="bg-red-50 text-red-600 p-4 rounded-md">{error}</div>}
-      
+    <Box sx={{ maxWidth: 1100, mx: 'auto', mt: 6, mb: 6, p: 2 }}>
+    <Card elevation={3} sx={{ p: 4, borderRadius: 3 }}>
+      {/* Upload and Instructions Section */}
+      <Box mb={3}>
+        <Typography variant="h4" fontWeight={700} gutterBottom>
+          Clustered Heatmap of Gene Expression
+        </Typography>
+        <Typography variant="body1" color="text.secondary" gutterBottom>
+          Upload an Excel file containing gene expression data to visualize the clustered heatmap.
+        </Typography>
+        <Box component="ul" sx={{ fontSize: 13, color: 'text.secondary', pl: 3, mb: 1 }}>
+          <li><b>Gene ID</b> — Unique gene identifier</li>
+          <li><b>Log2FC (Condition Name)</b> — Log2 fold change for each comparison. The column header should be in the format <code>Log2FC (Comparison Name)</code> (e.g., <code>Log2FC (Control vs KD)</code>)</li>
+          <li><b>P value (Condition Name)</b> — P-value for each comparison. The column header should be in the format <code>P value (Comparison Name)</code> (e.g., <code>P value (Control vs KD)</code>)</li>
+          <li><b>All Gene Ontology Category</b> — Category or pathway for each gene (e.g., "Triglyceride Metabolism")</li>
+        </Box>
+        <Typography sx={{ fontSize: 12, color: 'text.secondary', mb: 1 }}>
+          <b>Example of required column headers:</b><br />
+          <code>Gene ID</code>, <code>All Gene Ontology Category</code>, <code>Log2FC (Control vs KD)</code>, <code>P value (Control vs KD)</code>, <code>Log2FC (KD vs Rescue)</code>, <code>P value (KD vs Rescue)</code>, ...
+        </Typography>
+        <Typography sx={{ fontSize: 12, color: 'text.secondary', mb: 2 }}>
+          You may include additional columns if you wish. The app will automatically detect all comparisons and p-value columns based on their headers.
+        </Typography>
+        <Button
+          variant="outlined"
+          component="label"
+          sx={{ mb: 1 }}
+        >
+          Upload Excel File
+          <input
+            type="file"
+            accept=".xlsx, .xls"
+            hidden
+            onChange={handleFileUpload}
+          />
+        </Button>
+        {file && (
+          <Typography sx={{ mt: 1, fontSize: 13, color: 'primary.main' }}>
+            Using file: {file.name}
+          </Typography>
+        )}
+      </Box>
+
+      {/* Loading State */}
+      {loading && (
+        <Box py={6} textAlign="center">
+          <Typography variant="body1" color="text.secondary">
+            Loading gene expression data...
+          </Typography>
+        </Box>
+      )}
+
+      {/* Error State */}
+      {error && (
+        <Box sx={{ background: '#ffebee', color: '#c62828', p: 2, borderRadius: 2 }}>
+          {error}
+        </Box>
+      )}
+
+      {/* Main Content: Heatmap, Buttons, Legend */}
       {data && (
         <>
           {renderHeatmap()}
-          
+
           {/* Export buttons */}
-          <div className="mt-4 flex space-x-4 justify-center">
-            <button 
-              onClick={downloadAsSVG}
-              className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded"
-            >
-              Download as SVG
-            </button>
-            <button 
-              onClick={downloadAsPNG}
-              className="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded"
-            >
-              Download as PNG
-            </button>
-            <button
-              onClick={downloadProcessedData}
-              className="bg-yellow-600 hover:bg-yellow-700 text-white py-2 px-4 rounded"
-            >
-              Download Processed Data (XLSX)
-            </button>
-          </div>
-          
-          <div className="mt-4 text-sm text-gray-600">
-            <p className="font-bold">Visualization Legend:</p>
-            <ul className="list-disc pl-8 mt-1">
+          <Grid container spacing={2} justifyContent="center" sx={{ mt: 2 }}>
+            <Grid item>
+              <Button variant="contained" color="primary" onClick={downloadAsSVG}>
+                Download as SVG
+              </Button>
+            </Grid>
+            <Grid item>
+              <Button variant="contained" color="success" onClick={downloadAsPNG}>
+                Download as PNG
+              </Button>
+            </Grid>
+            <Grid item>
+              <Button variant="contained" color="warning" onClick={downloadProcessedData}>
+                Download Processed Data (XLSX)
+              </Button>
+            </Grid>
+          </Grid>
+
+          <Paper elevation={1} sx={{ mt: 4, p: 2, background: '#f9fafb' }}>
+            <Typography variant="subtitle1" fontWeight={600} gutterBottom>
+              Visualization Legend:
+            </Typography>
+            <Box component="ul" sx={{ fontSize: 14, color: 'text.secondary', pl: 3, mb: 0 }}>
               <li>Genes are grouped by biological process and sorted from lowest to highest log₂FC in the Control vs KD comparison</li>
               <li>Red indicates upregulation (positive log₂FC), blue indicates downregulation (negative log₂FC)</li>
               <li>Color intensity corresponds to the magnitude of change</li>
               <li>Black circles indicate statistical significance (p &lt; 0.05), with size proportional to significance level</li>
               <li>Larger circles (p &lt; 0.01) indicate higher statistical significance</li>
-            </ul>
-            <p className="mt-2">• The heatmap reveals patterns of gene expression changes across different biological processes and experimental conditions</p>
-            <p>• This visualization helps identify coordinated regulation within functional pathways</p>
-          </div>
+            </Box>
+            <Typography sx={{ fontSize: 13, mt: 1 }}>
+              • The heatmap reveals patterns of gene expression changes across different biological processes and experimental conditions<br />
+              • This visualization helps identify coordinated regulation within functional pathways
+            </Typography>
+          </Paper>
         </>
       )}
-    {/* Tooltip overlay */}
-      {tooltip.visible && (
-        <div style={{
-          position: 'fixed',
-          left: tooltip.x + 10,
-          top: tooltip.y + 10,
-          background: 'rgba(255,255,255,0.98)',
-          border: '1px solid #ccc',
-          borderRadius: 6,
-          padding: 8,
-          pointerEvents: 'none',
-          zIndex: 10000,
-          boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
-        }}>
-          {tooltip.content}
-        </div>
-      )}
-    </div>
-  );
-};
 
+      {/* Tooltip overlay */}
+      {tooltip.visible && (
+        <Box
+          sx={{
+            position: 'fixed',
+            left: tooltip.x + 10,
+            top: tooltip.y + 10,
+            background: 'rgba(255,255,255,0.98)',
+            border: '1px solid #ccc',
+            borderRadius: 1.5,
+            p: 1.5,
+            pointerEvents: 'none',
+            zIndex: 10000,
+            boxShadow: 3,
+            minWidth: 200
+          }}
+        >
+          {tooltip.content}
+        </Box>
+      )}
+    </Card>
+  </Box>
+  );
+}
 export default ClusteredHeatmap;
