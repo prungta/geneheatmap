@@ -229,30 +229,59 @@ const ClusteredHeatmap = () => {
     }
   };
 
-  const renderHeatmap = () => {
-    if (!data) return null;
+  // Utility function to measure text width using canvas
+const measureTextWidth = (text, font = '11px Arial') => {
+  const canvas = measureTextWidth.canvas || (measureTextWidth.canvas = document.createElement('canvas'));
+  const context = canvas.getContext('2d');
+  context.font = font;
+  return context.measureText(text).width;
+};
 
-    const width = margin.left + (cellWidth * data.comparisons.length) + margin.right;
-    const height = margin.top + (cellHeight * data.genes.length) + margin.bottom + 40;
+const renderHeatmap = () => {
+  if (!data) return null;
 
-    return (
-      <div style={{ width: '100%', overflowX: 'auto', paddingTop: '20px' }} ref={exportContainerRef}>
-        <svg width={width} height={height} ref={svgRef}>
+  // Compute dynamic column widths
+  const headerFont = 'bold 11px Arial';
+  const cellFont = '10px Arial';
+  const minColWidth = 50;
+  const colWidths = data.comparisons.map((comparison, j) => {
+    let maxWidth = measureTextWidth(comparison, headerFont);
+    data.genes.forEach(gene => {
+      const value = gene.values[j];
+      const text = value !== undefined && value !== null ? value.toFixed(1) : "N/A";
+      maxWidth = Math.max(maxWidth, measureTextWidth(text, cellFont));
+    });
+    // Add padding
+    return Math.ceil(Math.max(maxWidth + 18, minColWidth));
+  });
+
+  // Compute x positions for each column
+  const colX = colWidths.reduce((acc, w, i) => {
+    acc.push(i === 0 ? 0 : acc[i-1] + colWidths[i-1]);
+    return acc;
+  }, []);
+  const totalColsWidth = colWidths.reduce((a, b) => a + b, 0);
+  const width = margin.left + totalColsWidth + margin.right;
+  const height = margin.top + (cellHeight * data.genes.length) + margin.bottom + 40;
+
+  return (
+    <div style={{ width: '100%', overflowX: 'auto', paddingTop: '20px' }} ref={exportContainerRef}>
+      <svg width={width} height={height} ref={svgRef}>
           <g transform={`translate(${margin.left}, ${margin.top})`}>
             {/* Column Headers (Comparisons) */}
             {data.comparisons.map((comparison, j) => (
-              <g key={`col-${j}`} transform={`translate(${j * cellWidth}, 0)`}>
-                <text
-                  x={cellWidth / 2}
-                  y={-20}
-                  textAnchor="middle"
-                  fontWeight="bold"
-                  fontSize="11px"
-                >
-                  {comparison}
-                </text>
-              </g>
-            ))}
+  <g key={`col-${j}`} transform={`translate(${colX[j]}, 0)`}>
+    <text
+      x={colWidths[j] / 2}
+      y={-20}
+      textAnchor="middle"
+      fontWeight="bold"
+      fontSize="11px"
+    >
+      {comparison}
+    </text>
+  </g>
+))} 
             
             {/* Legend - moved up slightly */}
             <g transform={`translate(0, ${-75})`}>
@@ -356,7 +385,7 @@ const ClusteredHeatmap = () => {
                     <line
                       x1={-margin.left}
                       y1={groupY - 2}
-                      x2={data.comparisons.length * cellWidth}
+                      x2={totalColsWidth}
                       y2={groupY - 2}
                       stroke="#000"
                       strokeWidth="1"
@@ -382,42 +411,42 @@ const ClusteredHeatmap = () => {
                 
                 {/* Gene expression cells */}
                 {gene.values.map((value, j) => {
-                  const pValue = gene.pValues[j];
-                  const isSignificant = pValue < 0.05;
-                  const isMarginal = pValue >= 0.05 && pValue < 0.1;
-                  const circleRadius = isSignificant ? getSizeForPValue(pValue) : (isMarginal ? 2 : 0);
-                  
-                  return (
-                    <g key={`cell-${i}-${j}`} transform={`translate(${j * cellWidth}, 0)`}>
-                      <rect
-                        width={cellWidth - 1}
-                        height={cellHeight - 1}
-                        fill={colorScale(value)}
-                        stroke="#fff"
-                        strokeWidth="1"
-                      />
-                      <text
-                        x={cellWidth / 2}
-                        y={cellHeight / 2 + 4}
-                        textAnchor="middle"
-                        fontSize="10px"
-                        fontWeight={isSignificant ? "bold" : "normal"}
-                        fill={Math.abs(value) > 1.5 ? "white" : "black"}
-                      >
-                        {value !== undefined && value !== null ? value.toFixed(1) : "N/A"}
-                      </text>
-                      {(isSignificant || isMarginal) && (
-                        <circle
-                          cx={cellWidth - 15}
-                          cy={cellHeight / 2}
-                          r={circleRadius}
-                          fill={isSignificant ? "black" : "#888"}
-                          opacity={0.8}
-                        />
-                      )}
-                    </g>
-                  );
-                })}
+  const pValue = gene.pValues[j];
+  const isSignificant = pValue < 0.05;
+  const isMarginal = pValue >= 0.05 && pValue < 0.1;
+  const circleRadius = isSignificant ? getSizeForPValue(pValue) : (isMarginal ? 2 : 0);
+
+  return (
+    <g key={`cell-${i}-${j}`} transform={`translate(${colX[j]}, 0)`}>
+      <rect
+        width={colWidths[j] - 1}
+        height={cellHeight - 1}
+        fill={colorScale(value)}
+        stroke="#fff"
+        strokeWidth="1"
+      />
+      <text
+        x={colWidths[j] / 2}
+        y={cellHeight / 2 + 4}
+        textAnchor="middle"
+        fontSize="10px"
+        fontWeight={isSignificant ? "bold" : "normal"}
+        fill={Math.abs(value) > 1.5 ? "white" : "black"}
+      >
+        {value !== undefined && value !== null ? value.toFixed(1) : "N/A"}
+      </text>
+      {(isSignificant || isMarginal) && (
+        <circle
+          cx={colWidths[j] - 15}
+          cy={cellHeight / 2}
+          r={circleRadius}
+          fill={isSignificant ? "black" : "#888"}
+          opacity={0.8}
+        />
+      )}
+    </g>
+  );
+})} 
               </g>
             ))}
           </g>
