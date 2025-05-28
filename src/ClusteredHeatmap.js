@@ -189,7 +189,7 @@ const ClusteredHeatmap = () => {
   };
 
   // Default cell dimensions
-  const cellWidth = 150; // Wide cells for readability
+  
   const cellHeight = 30;
   const margin = { top: 100, right: 40, bottom: 50, left: 200 }; // Increased top margin for legend
 
