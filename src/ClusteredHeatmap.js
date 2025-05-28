@@ -191,7 +191,7 @@ const ClusteredHeatmap = () => {
   // Default cell dimensions
   
   const cellHeight = 30;
-  const margin = { top: 100, right: 40, bottom: 50, left: 200 }; // Increased top margin for legend
+  const margin = { top: 100, right: 200, bottom: 50, left: 200 }; // Increased right margin to prevent legend clipping
 
   // Color scale for heatmap - using d3 color interpolation
   const colorScale = (value) => {
