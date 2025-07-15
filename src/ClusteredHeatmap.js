@@ -661,18 +661,42 @@ borderRadius: 8, padding: '14px 20px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', 
       <svg width={width} height={height} ref={svgRef}>
         <g className="heatmap-zoomable" transform={`translate(${margin.left}, ${margin.top})`}>
           {/* Column Headers (Comparisons) */}
-          {data.comparisons.map((comparison, j) => (
-            <g key={`col-${j}`} transform={`translate(${colX[j]}, 0)`}>
-              <text
-                x={colWidths[j] / 2}
-                y={-20}
-                textAnchor="middle"
-                fontWeight="bold"
-                fontSize={`${fontSizes.header}px`}
-                style={{ userSelect: 'none' }}
-              >
-                {comparison}
-              </text>
+          {data.comparisons.map((comparison, j) => {
+            // Word wrap header text to fit colWidths[j]
+            const wrapHeaderText = (text, maxWidth, font) => {
+              const words = text.split(' ');
+              const lines = [];
+              let line = '';
+              words.forEach(word => {
+                const testLine = line ? line + ' ' + word : word;
+                if (measureTextWidth(testLine, font) > maxWidth - 8 && line) {
+                  lines.push(line);
+                  line = word;
+                } else {
+                  line = testLine;
+                }
+              });
+              if (line) lines.push(line);
+              return lines;
+            };
+            const headerFont = `bold ${fontSizes.header}px Arial`;
+            const headerLines = wrapHeaderText(comparison, colWidths[j], headerFont);
+            return (
+              <g key={`col-${j}`} transform={`translate(${colX[j]}, 0)`}>
+                <text
+                  x={colWidths[j] / 2}
+                  y={-20 - (headerLines.length - 1) * fontSizes.header / 2}
+                  textAnchor="middle"
+                  fontWeight="bold"
+                  fontSize={`${fontSizes.header}px`}
+                  style={{ userSelect: 'none' }}
+                >
+                  {headerLines.map((line, idx) => (
+                    <tspan key={idx} x={colWidths[j] / 2} dy={idx === 0 ? 0 : fontSizes.header}>
+                      {line}
+                    </tspan>
+                  ))}
+                </text>
               {/* Resizer handle */}
               <rect
                 x={colWidths[j] - 6}
