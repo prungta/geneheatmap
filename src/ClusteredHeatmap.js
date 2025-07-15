@@ -8,6 +8,18 @@ const ClusteredHeatmap = () => {
   const [colWidthsState, setColWidthsState] = useState(null); // null until data loaded
   // ... other state ...
 
+
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [file, setFile] = useState(null);
+  const [colorScaleType, setColorScaleType] = useState('linear'); // linear, log, quantile
+  const [fontSizes, setFontSizes] = useState({
+    geneName: 11,    // Default font size for gene names
+    foldChange: 10,  // Default font size for fold change values
+    header: 11       // Default font size for headers
+  });
+
   // Initialize column widths state if not set or if column count changed
   React.useEffect(() => {
     if (data && (!colWidthsState || colWidthsState.length !== (data.comparisons?.length || 0))) {
@@ -29,16 +41,6 @@ const ClusteredHeatmap = () => {
     // eslint-disable-next-line
   }, [data && data.comparisons?.length, fontSizes.header, fontSizes.foldChange]);
 
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [file, setFile] = useState(null);
-  const [colorScaleType, setColorScaleType] = useState('linear'); // linear, log, quantile
-  const [fontSizes, setFontSizes] = useState({
-    geneName: 11,    // Default font size for gene names
-    foldChange: 10,  // Default font size for fold change values
-    header: 11       // Default font size for headers
-  });
   const [selectedCells, setSelectedCells] = useState([]); // [{row, col}]
   const resizingCol = useRef(null); // Track which column is being resized
   const startX = useRef(null); // Track mouse X position on resize start
