@@ -816,7 +816,7 @@ borderRadius: 8, padding: '14px 20px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', 
                     
                     // Align the right edge of the category box to the left edge of the gene name, with a small gap
                     const gap = 5;
-                    const xPosition = dynamicMargin.left - boxWidth - gap;
+                    const xPosition = -boxWidth - gap;
                     
                     // Combine category name and count
                     const labelText = `${category} (${genesInCategory})`;
