@@ -820,7 +820,7 @@ borderRadius: 8, padding: '14px 20px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', 
                     if (data && data.genes && data.genes.length > 0) {
                       maxGeneNameWidth = Math.max(...data.genes.map(gene => measureTextWidth(gene.id, geneNameFont)));
                     }
-                    const xPosition = -(maxGeneNameWidth + 10 + boxWidth);
+                    const xPosition = -(maxGeneNameWidth + 20 + boxWidth);
                     
                     // Combine category name and count
                     const labelText = `${category} (${genesInCategory})`;
