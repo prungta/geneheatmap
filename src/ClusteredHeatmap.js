@@ -811,15 +811,12 @@ borderRadius: 8, padding: '14px 20px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', 
                     // Calculate positions based on first and last gene in category
                     const yStart = firstGeneIndex * cellHeight;
                     
-                    // Width of the category box (vertical height when rotated)
+                    // Fixed width for the category box
                     const boxWidth = 30;
                     
-                    // For the category box, we want it positioned right next to the gene names
-                    // with a small consistent gap
-                    const gap = 5;
-                    // Position the box so its right edge aligns with the left edge of gene names
-                    // The -gap ensures a small consistent gap between boxes and gene names
-                    const xPosition = -gap - boxWidth;
+                    // Position the category box at a fixed distance from the left edge
+                    // This ensures consistent positioning regardless of gene name length
+                    const xPosition = -40;
                     
                     // Combine category name and count
                     const labelText = `${category} (${genesInCategory})`;
