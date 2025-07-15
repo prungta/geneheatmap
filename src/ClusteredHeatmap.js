@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import * as d3 from 'd3';
 import * as XLSX from 'xlsx';
-import { Card, Typography, Button, Box, Grid, Paper } from '@mui/material';
+import { Card, Typography, Button, Box, Grid, Paper, Slider, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 
 const ClusteredHeatmap = () => {
   const [data, setData] = useState(null);
@@ -9,6 +9,11 @@ const ClusteredHeatmap = () => {
   const [error, setError] = useState(null);
   const [file, setFile] = useState(null);
   const [colorScaleType, setColorScaleType] = useState('linear'); // linear, log, quantile
+  const [fontSizes, setFontSizes] = useState({
+    geneName: 11,    // Default font size for gene names
+    foldChange: 10,  // Default font size for fold change values
+    header: 11       // Default font size for headers
+  });
   const [selectedCells, setSelectedCells] = useState([]); // [{row, col}]
   const [tooltip, setTooltip] = useState({ visible: false, x: 0, y: 0, content: null });
   const svgRef = useRef(null);
@@ -336,8 +341,7 @@ const ClusteredHeatmap = () => {
   };
 
   // Default cell dimensions
-  
-  const cellHeight = 30;
+  const cellHeight = Math.max(30, fontSizes.geneName + 10); // Ensure cell height is at least 10px larger than gene name font
   const margin = { top: 100, right: 200, bottom: 50, left: 200 }; // Increased right margin to prevent legend clipping
 
 
@@ -429,8 +433,8 @@ const renderHeatmap = () => {
   if (!data) return null;
 
   // Compute dynamic column widths, then use the largest for all columns
-  const headerFont = 'bold 11px Arial';
-  const cellFont = '10px Arial';
+  const headerFont = `bold ${fontSizes.header}px Arial`;
+  const cellFont = `${fontSizes.foldChange}px Arial`;
   const minColWidth = 50;
   // Calculate individual column widths
   const colWidthsRaw = data.comparisons.map((comparison, j) => {
@@ -454,27 +458,105 @@ const renderHeatmap = () => {
     return acc;
   }, []);
   const totalColsWidth = colWidths.reduce((a, b) => a + b, 0);
-  const width = margin.left + totalColsWidth + margin.right;
-  const height = margin.top + (cellHeight * data.genes.length) + margin.bottom + 40;
+  
+  // Calculate dynamic width based on content and font sizes
+  const minLeftMargin = Math.max(200, Math.max(...data.genes.map(g => 
+    measureTextWidth(g.id, `${fontSizes.geneName}px Arial`)
+  )) + 30);
+  
+  const dynamicMargin = { ...margin, left: minLeftMargin };
+  
+  const width = dynamicMargin.left + totalColsWidth + dynamicMargin.right;
+  const height = dynamicMargin.top + (cellHeight * data.genes.length) + dynamicMargin.bottom + 40;
 
-  return (
-    <div style={{ width: '100%', overflowX: 'auto', paddingTop: '20px' }} ref={exportContainerRef}>
-      {/* Color scale dropdown */}
-      <div style={{marginBottom:8, display:'flex', alignItems:'center', justifyContent:'center', position:'relative'}}>
-        <label style={{marginRight:8}}>Color Scale:</label>
-        <select value={colorScaleType} onChange={e => setColorScaleType(e.target.value)}>
-          <option value="linear">Linear</option>
-          <option value="log">Log</option>
-          <option value="quantile">Quantile</option>
-        </select>
-        <button style={{marginLeft:16}} onClick={exportSelection} disabled={!selectedCells.length}>Export Selection</button>
-        <span style={{marginLeft:16, fontSize:12, color:'#666'}}>{selectedCells.length} selected</span>
-      </div>
-      <div style={{
-        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        margin: '0 auto 18px auto', maxWidth: 500, background: '#f9f9fc', border: '1px solid #dbeafe',
-        borderRadius: 8, padding: '14px 20px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', fontSize: 14
-      }}>
+return (
+<div style={{ width: '100%', overflowX: 'auto', paddingTop: '20px' }} ref={exportContainerRef}>
+{/* Color scale dropdown */}
+<Box sx={{ mb: 2, p: 2, border: '1px solid #e0e0e0', borderRadius: 1, backgroundColor: '#f9f9f9' }}>
+<Grid container spacing={3} alignItems="center">
+<Grid item xs={12} sm={6} md={4}>
+<Typography id="gene-name-slider" gutterBottom sx={{ fontSize: '0.875rem' }}>
+Gene Name Size: {fontSizes.geneName}px
+</Typography>
+<Slider
+value={fontSizes.geneName}
+onChange={(e, value) => setFontSizes(prev => ({ ...prev, geneName: value }))}
+aria-labelledby="gene-name-slider"
+valueLabelDisplay="auto"
+step={1}
+marks
+min={8}
+max={20}
+/>
+</Grid>
+<Grid item xs={12} sm={6} md={4}>
+<Typography id="fold-change-slider" gutterBottom sx={{ fontSize: '0.875rem' }}>
+Fold Change Size: {fontSizes.foldChange}px
+</Typography>
+<Slider
+value={fontSizes.foldChange}
+onChange={(e, value) => setFontSizes(prev => ({ ...prev, foldChange: value }))}
+aria-labelledby="fold-change-slider"
+valueLabelDisplay="auto"
+step={1}
+marks
+min={8}
+max={20}
+/>
+</Grid>
+<Grid item xs={12} sm={6} md={4}>
+<Typography id="header-slider" gutterBottom sx={{ fontSize: '0.875rem' }}>
+Header Size: {fontSizes.header}px
+</Typography>
+<Slider
+value={fontSizes.header}
+onChange={(e, value) => setFontSizes(prev => ({ ...prev, header: value }))}
+aria-labelledby="header-slider"
+valueLabelDisplay="auto"
+step={1}
+marks
+min={8}
+max={20}
+/>
+</Grid>
+<Grid item xs={12} sm={6} md={4}>
+<FormControl fullWidth size="small" variant="outlined">
+<InputLabel id="color-scale-label">Color Scale</InputLabel>
+<Select
+labelId="color-scale-label"
+value={colorScaleType}
+onChange={e => setColorScaleType(e.target.value)}
+label="Color Scale"
+sx={{ minWidth: 200 }}
+>
+<MenuItem value="linear">Linear</MenuItem>
+<MenuItem value="log">Log</MenuItem>
+<MenuItem value="quantile">Quantile</MenuItem>
+</Select>
+</FormControl>
+</Grid>
+<Grid item xs={12} sm={6} md={4} display="flex" alignItems="center">
+<Button 
+variant="contained" 
+onClick={exportSelection} 
+disabled={!selectedCells.length}
+size="small"
+sx={{ mr: 2 }}
+>
+Export Selection
+</Button>
+<Typography variant="body2" color="text.secondary">
+{selectedCells.length} selected
+</Typography>
+</Grid>
+</Grid>
+</Box>
+<div style={{
+display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+margin: '0 auto 18px auto', maxWidth: 500, background: '#f9f9fc', border: '1px solid #dbeafe',
+borderRadius: 8, padding: '14px 20px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', fontSize: 14
+}}>
+{/* ... rest of the code remains the same ... */}
         <div style={{fontWeight:'bold', marginBottom: 6, color:'#1976d2'}}>What do the color scales mean?</div>
         <table style={{width:'100%', borderCollapse:'collapse', marginBottom:8, fontSize:13}}>
           <thead>
@@ -632,7 +714,7 @@ const renderHeatmap = () => {
                 x={-15}
                 y={cellHeight / 2 + 5}
                 textAnchor="end"
-                fontSize="11px"
+                fontSize={`${fontSizes.geneName}px`}
               >
                 {gene.id}
               </text>
@@ -659,7 +741,7 @@ const renderHeatmap = () => {
                       x={colWidths[j] / 2}
                       y={cellHeight / 2 + 4}
                       textAnchor="middle"
-                      fontSize="10px"
+                      fontSize={`${fontSizes.foldChange}px`}
                       fontWeight={isSignificant ? "bold" : "normal"}
                       fill={Math.abs(value) > 1.5 ? "white" : "black"}
                     >
