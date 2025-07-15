@@ -789,8 +789,8 @@ borderRadius: 8, padding: '14px 20px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', 
             
             return (
               <g key={`cat-label-${categoryIndex}`}>
-                {/* Vertical category label along the left side - positioned closer to gene names */}
-                <g transform={`translate(-${fontSizes.geneName * 2.5}, ${middleY})`}>
+                {/* Vertical category label along the left side - positioned far enough to avoid gene name overlap */}
+                <g transform={`translate(-${dynamicMargin.left + fontSizes.geneName * 2}, ${middleY})`}>
                   {/* Background for vertical category label */}
                   <rect
                     x={-fontSizes.geneName * 2}
