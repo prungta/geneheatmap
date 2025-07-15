@@ -790,12 +790,12 @@ borderRadius: 8, padding: '14px 20px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', 
             return (
               <g key={`cat-label-${categoryIndex}`}>
                 {/* Vertical category label along the left side - positioned far enough to avoid gene name overlap */}
-                <g transform={`translate(-${dynamicMargin.left + fontSizes.geneName * 2}, ${middleY})`}>
-                  {/* Background for vertical category label */}
+                <g transform={`translate(-${dynamicMargin.left * 1.2}, ${middleY})`}>
+                  {/* Background for vertical category label - width adapts to category height */}
                   <rect
-                    x={-fontSizes.geneName * 2}
+                    x={-Math.min(categoryHeight / 2, fontSizes.geneName * 5)}
                     y={-categoryHeight / 2}
-                    width={fontSizes.geneName * 4}
+                    width={Math.min(categoryHeight, fontSizes.geneName * 10)}
                     height={categoryHeight}
                     fill={categoryColor}
                     stroke="#888"
@@ -809,44 +809,55 @@ borderRadius: 8, padding: '14px 20px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', 
                     const availableWidth = categoryHeight * 0.9;
                     // Maximum width for each line based on font size
                     const lineHeight = fontSizes.geneName * 1.2;
-                    // Combine category and count
-                    const fullText = `${category} (${genesInCategory})`;
                     
-                    // Estimate characters per line based on font size
-                    const charsPerLine = Math.max(Math.floor(availableWidth / (fontSizes.geneName * 0.6)), 10);
+                    // Separate category name and count for better formatting
+                    const categoryText = category;
+                    const countText = `(${genesInCategory})`;
                     
-                    // Split text into lines
+                    // Always ensure category name gets wrapped properly
+                    // For very long category names, we'll break them into chunks
+                    const maxCharsPerLine = Math.max(Math.floor(availableWidth / (fontSizes.geneName * 0.5)), 8);
+                    
+                    // Split text into lines - handle long words by breaking them if needed
                     const lines = [];
                     let currentLine = '';
-                    const words = fullText.split(' ');
+                    
+                    // First handle the category name
+                    const words = categoryText.split(' ');
                     
                     words.forEach(word => {
-                      if ((currentLine + ' ' + word).length <= charsPerLine) {
+                      // If word is very long, break it
+                      if (word.length > maxCharsPerLine) {
+                        // First add any current line content
+                        if (currentLine) {
+                          lines.push(currentLine);
+                          currentLine = '';
+                        }
+                        
+                        // Then break the long word
+                        for (let i = 0; i < word.length; i += maxCharsPerLine) {
+                          const chunk = word.substr(i, maxCharsPerLine);
+                          if (i + maxCharsPerLine >= word.length) {
+                            currentLine = chunk; // Last chunk becomes current line
+                          } else {
+                            lines.push(chunk + '-');
+                          }
+                        }
+                      } else if ((currentLine + ' ' + word).length <= maxCharsPerLine) {
                         currentLine = currentLine ? currentLine + ' ' + word : word;
                       } else {
                         lines.push(currentLine);
                         currentLine = word;
                       }
                     });
+                    
                     if (currentLine) lines.push(currentLine);
                     
-                    // If text fits on one line, just use the original approach
-                    if (lines.length <= 1) {
-                      return (
-                        <text
-                          transform={`rotate(-90)`}
-                          x={0}
-                          y={0}
-                          textAnchor="middle"
-                          dominantBaseline="middle"
-                          fontWeight="bold"
-                          fontSize={`${fontSizes.geneName}px`}
-                          fill="#333"
-                        >
-                          {fullText}
-                        </text>
-                      );
-                    }
+                    // Add the count on its own line
+                    lines.push(countText);
+                    
+                    // We'll always use multi-line approach since we separated category and count
+                    // This ensures consistent rendering
                     
                     // Otherwise render multiple lines
                     return lines.map((line, i) => {
