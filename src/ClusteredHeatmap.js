@@ -377,16 +377,8 @@ const ClusteredHeatmap = () => {
   // Default cell dimensions
   const cellHeight = Math.max(30, fontSizes.geneName + 10); // Ensure cell height is at least 10px larger than gene name font
   
-  // Calculate left margin based only on gene name width
-  const geneNameFont = `${fontSizes.geneName}px Arial`;
-  let maxGeneNameWidth = 100; // Default if no data
-  if (data && data.genes && data.genes.length > 0) {
-    // Find the maximum width of gene names
-    maxGeneNameWidth = Math.max(...data.genes.map(gene => {
-      return measureTextWidth(gene.id, geneNameFont);
-    }));
-  }
-  const margin = { top: 100, right: 200, bottom: 50, left: Math.max(100, maxGeneNameWidth + 30) };
+  // Default margin values - actual left margin will be calculated in renderHeatmap
+  const margin = { top: 100, right: 200, bottom: 50, left: 200 };
 
 
 
@@ -538,12 +530,17 @@ const renderHeatmap = () => {
   };
   const totalColsWidth = colWidths.reduce((a, b) => a + b, 0);
   
-  // Calculate dynamic width based on content and font sizes
-  const minLeftMargin = Math.max(200, Math.max(...data.genes.map(g => 
-    measureTextWidth(g.id, `${fontSizes.geneName}px Arial`)
-  )) + 30);
+  // Calculate dynamic width based on content and font sizes - using gene name width only
+  const geneNameFont = `${fontSizes.geneName}px Arial`;
+  let maxGeneNameWidth = 100; // Default if no data
+  if (data && data.genes && data.genes.length > 0) {
+    // Find the maximum width of gene names
+    maxGeneNameWidth = Math.max(...data.genes.map(gene => {
+      return measureTextWidth(gene.id, geneNameFont);
+    }));
+  }
   
-  const dynamicMargin = { ...margin, left: minLeftMargin };
+  const dynamicMargin = { ...margin, left: Math.max(100, maxGeneNameWidth + 30) };
   
   const width = dynamicMargin.left + totalColsWidth + dynamicMargin.right;
   const height = dynamicMargin.top + (cellHeight * data.genes.length) + dynamicMargin.bottom + 40;
@@ -766,6 +763,7 @@ borderRadius: 8, padding: '14px 20px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', 
               <text x={140} y={0} fontSize="11px">p &lt; 0.05</text>
             </g>
           </g>
+          {/* Category labels are now rendered inside the renderHeatmap function */}
           {/* Category labels above each group */}
           {data.categories && data.categories.map((category, categoryIndex) => {
             // Find the first gene with this category
@@ -782,12 +780,12 @@ borderRadius: 8, padding: '14px 20px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', 
             const categoryColor = getCategoryColor(category);
             
             return (
-              <g key={`cat-label-${categoryIndex}`} transform={`translate(-${margin.left - 10}, ${yPosition})`}>
+              <g key={`cat-label-${categoryIndex}`} transform={`translate(-${dynamicMargin.left - 10}, ${yPosition})`}>
                 {/* Background for category label */}
                 <rect
                   x={-10}
                   y={-fontSizes.geneName - 5}
-                  width={margin.left + totalColsWidth}
+                  width={dynamicMargin.left + totalColsWidth}
                   height={fontSizes.geneName * 2 + 25}
                   fill={categoryColor}
                   stroke="#ccc"
@@ -819,7 +817,7 @@ borderRadius: 8, padding: '14px 20px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', 
                   <line
                     x1={-10}
                     y1={-cellHeight * 0.3}
-                    x2={margin.left + totalColsWidth}
+                    x2={dynamicMargin.left + totalColsWidth}
                     y2={-cellHeight * 0.3}
                     stroke="#000"
                     strokeWidth="1"
@@ -829,6 +827,7 @@ borderRadius: 8, padding: '14px 20px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', 
               </g>
             );
           })}
+          
           {/* Gene cells */}
           {data.genes.map((gene, i) => (
             <g key={`row-${i}`} transform={`translate(0, ${i * cellHeight})`}>
