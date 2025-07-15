@@ -814,12 +814,12 @@ borderRadius: 8, padding: '14px 20px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', 
                     // Width of the category box (vertical height when rotated)
                     const boxWidth = 30;
                     
-                    // Calculate position to ensure category box stays left of gene names
-                    // We use dynamicMargin.left which already accounts for the longest gene name
-                    // Add a gap (20px) between category boxes and gene names
-                    // This ensures the category box is positioned correctly regardless of gene name size
-                    const gap = 20;
-                    const xPosition = -dynamicMargin.left + gap;
+                    // For the category box, we want it positioned right next to the gene names
+                    // with a small consistent gap
+                    const gap = 5;
+                    // Position the box so its right edge aligns with the left edge of gene names
+                    // The -gap ensures a small consistent gap between boxes and gene names
+                    const xPosition = -gap - boxWidth;
                     
                     // Combine category name and count
                     const labelText = `${category} (${genesInCategory})`;
