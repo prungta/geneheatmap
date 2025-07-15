@@ -789,8 +789,8 @@ borderRadius: 8, padding: '14px 20px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', 
             
             return (
               <g key={`cat-label-${categoryIndex}`}>
-                {/* Vertical category label along the left side - positioned with fixed offset */}
-                <g transform={`translate(-${dynamicMargin.left + fontSizes.geneName * 5}, ${middleY})`}>
+                {/* Vertical category label along the left side - positioned closer to gene names */}
+                <g transform={`translate(-${fontSizes.geneName * 2.5}, ${middleY})`}>
                   {/* Background for vertical category label */}
                   <rect
                     x={-fontSizes.geneName * 2}
@@ -803,19 +803,71 @@ borderRadius: 8, padding: '14px 20px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', 
                     rx={3}
                   />
                   
-                  {/* Rotated category name */}
-                  <text
-                    transform={`rotate(-90)`}
-                    x={0}
-                    y={0}
-                    textAnchor="middle"
-                    dominantBaseline="middle"
-                    fontWeight="bold"
-                    fontSize={`${fontSizes.geneName}px`}
-                    fill="#333"
-                  >
-                    {category} ({genesInCategory})
-                  </text>
+                  {/* Function to wrap text and render it in multiple lines if needed */}
+                  {(() => {
+                    // Calculate available height for text (slightly less than rectangle height)
+                    const availableWidth = categoryHeight * 0.9;
+                    // Maximum width for each line based on font size
+                    const lineHeight = fontSizes.geneName * 1.2;
+                    // Combine category and count
+                    const fullText = `${category} (${genesInCategory})`;
+                    
+                    // Estimate characters per line based on font size
+                    const charsPerLine = Math.max(Math.floor(availableWidth / (fontSizes.geneName * 0.6)), 10);
+                    
+                    // Split text into lines
+                    const lines = [];
+                    let currentLine = '';
+                    const words = fullText.split(' ');
+                    
+                    words.forEach(word => {
+                      if ((currentLine + ' ' + word).length <= charsPerLine) {
+                        currentLine = currentLine ? currentLine + ' ' + word : word;
+                      } else {
+                        lines.push(currentLine);
+                        currentLine = word;
+                      }
+                    });
+                    if (currentLine) lines.push(currentLine);
+                    
+                    // If text fits on one line, just use the original approach
+                    if (lines.length <= 1) {
+                      return (
+                        <text
+                          transform={`rotate(-90)`}
+                          x={0}
+                          y={0}
+                          textAnchor="middle"
+                          dominantBaseline="middle"
+                          fontWeight="bold"
+                          fontSize={`${fontSizes.geneName}px`}
+                          fill="#333"
+                        >
+                          {fullText}
+                        </text>
+                      );
+                    }
+                    
+                    // Otherwise render multiple lines
+                    return lines.map((line, i) => {
+                      const lineOffset = (i - (lines.length - 1) / 2) * lineHeight;
+                      return (
+                        <text
+                          key={`line-${i}`}
+                          transform={`rotate(-90)`}
+                          x={lineOffset}
+                          y={0}
+                          textAnchor="middle"
+                          dominantBaseline="middle"
+                          fontWeight="bold"
+                          fontSize={`${fontSizes.geneName}px`}
+                          fill="#333"
+                        >
+                          {line}
+                        </text>
+                      );
+                    });
+                  })()}
                 </g>
                 
                 {/* Add a subtle background for the entire category group */}
