@@ -15,6 +15,10 @@ const ClusteredHeatmap = () => {
     header: 11       // Default font size for headers
   });
   const [selectedCells, setSelectedCells] = useState([]); // [{row, col}]
+  const [colWidthsState, setColWidthsState] = useState(null); // null until data loaded
+  const resizingCol = useRef(null); // Track which column is being resized
+  const startX = useRef(null); // Track mouse X position on resize start
+  const startWidth = useRef(null); // Track initial width on resize start
   const [tooltip, setTooltip] = useState({ visible: false, x: 0, y: 0, content: null });
   const svgRef = useRef(null);
   const exportContainerRef = useRef(null);
@@ -451,16 +455,52 @@ const renderHeatmap = () => {
     // Add padding
     return Math.ceil(Math.max(maxWidth + 18, minColWidth));
   });
-  // Find the maximum width
-  const maxColWidth = Math.max(...colWidthsRaw);
-  // Use the maximum width for all columns
-  const colWidths = data.comparisons.map(() => maxColWidth);
+
+  // Initialize column widths state if not set or if column count changed
+  React.useEffect(() => {
+    if (data && (!colWidthsState || colWidthsState.length !== data.comparisons.length)) {
+      setColWidthsState([...colWidthsRaw]);
+    }
+    // eslint-disable-next-line
+  }, [data && data.comparisons.length, fontSizes.header, fontSizes.foldChange]);
+
+  // Use state for column widths if available
+  const colWidths = colWidthsState || colWidthsRaw;
 
   // Compute x positions for each column
   const colX = colWidths.reduce((acc, w, i) => {
     acc.push(i === 0 ? 0 : acc[i-1] + colWidths[i-1]);
     return acc;
   }, []);
+
+  // --- Column resizing handlers ---
+  const handleResizerMouseDown = (e, colIdx) => {
+    resizingCol.current = colIdx;
+    startX.current = e.clientX;
+    startWidth.current = colWidths[colIdx];
+    document.body.style.cursor = 'col-resize';
+    window.addEventListener('mousemove', handleResizerMouseMove);
+    window.addEventListener('mouseup', handleResizerMouseUp);
+    e.stopPropagation();
+    e.preventDefault();
+  };
+
+  const handleResizerMouseMove = (e) => {
+    if (resizingCol.current === null) return;
+    const delta = e.clientX - startX.current;
+    setColWidthsState(prev => {
+      const newWidths = [...prev];
+      newWidths[resizingCol.current] = Math.max(minColWidth, startWidth.current + delta);
+      return newWidths;
+    });
+  };
+
+  const handleResizerMouseUp = () => {
+    resizingCol.current = null;
+    document.body.style.cursor = '';
+    window.removeEventListener('mousemove', handleResizerMouseMove);
+    window.removeEventListener('mouseup', handleResizerMouseUp);
+  };
   const totalColsWidth = colWidths.reduce((a, b) => a + b, 0);
   
   // Calculate dynamic width based on content and font sizes
@@ -604,10 +644,29 @@ borderRadius: 8, padding: '14px 20px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', 
                 y={-20}
                 textAnchor="middle"
                 fontWeight="bold"
-                fontSize="11px"
+                fontSize={`${fontSizes.header}px`}
+                style={{ userSelect: 'none' }}
               >
                 {comparison}
               </text>
+              {/* Resizer handle */}
+              <rect
+                x={colWidths[j] - 6}
+                y={-35}
+                width={8}
+                height={cellHeight * data.genes.length + 40}
+                fill="transparent"
+                style={{ cursor: 'col-resize' }}
+                onMouseDown={e => handleResizerMouseDown(e, j)}
+              />
+              <rect
+                x={colWidths[j] - 3}
+                y={-35}
+                width={2}
+                height={cellHeight * data.genes.length + 40}
+                fill="#b0b0b0"
+                pointerEvents="none"
+              />
             </g>
           ))}
           {/* Legend - moved up slightly */}
