@@ -795,10 +795,9 @@ borderRadius: 8, padding: '14px 20px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', 
             // Count genes in this category
             const genesInCategory = data.genes.filter(gene => gene.category === category).length;
             
-            // Calculate the middle position of this category group
+            // Calculate the position and dimensions of this category group
             const yStart = firstGeneIndex * cellHeight;
             const categoryHeight = genesInCategory * cellHeight;
-            const middleY = yStart + (categoryHeight / 2);
             
             // Get background color for this category
             const categoryColor = getCategoryColor(category);
@@ -811,7 +810,6 @@ borderRadius: 8, padding: '14px 20px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', 
                   {(() => {
                     // Calculate positions based on first and last gene in category
                     const yStart = firstGeneIndex * cellHeight;
-                    const yEnd = yStart + categoryHeight;
                     
                     // Gap between gene names and category box
                     const gap = 5;
