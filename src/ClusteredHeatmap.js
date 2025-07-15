@@ -770,7 +770,7 @@ borderRadius: 8, padding: '14px 20px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', 
             </g>
           </g>
           {/* Category labels are now rendered inside the renderHeatmap function */}
-          {/* Category labels above each group */}
+          {/* Vertical category labels along gene names */}
           {data.categories && data.categories.map((category, categoryIndex) => {
             // Find the first gene with this category
             const firstGeneIndex = data.genes.findIndex(gene => gene.category === category);
@@ -779,46 +779,50 @@ borderRadius: 8, padding: '14px 20px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', 
             // Count genes in this category
             const genesInCategory = data.genes.filter(gene => gene.category === category).length;
             
-            // Position the category label above the first gene in the group
-            const yPosition = firstGeneIndex * cellHeight;
+            // Calculate the middle position of this category group
+            const yStart = firstGeneIndex * cellHeight;
+            const categoryHeight = genesInCategory * cellHeight;
+            const middleY = yStart + (categoryHeight / 2);
             
             // Get background color for this category
             const categoryColor = getCategoryColor(category);
             
             return (
               <g key={`cat-label-${categoryIndex}`}>
-                {/* Category header - positioned above the gene group */}
-                <g transform={`translate(0, ${yPosition - 20})`}>
-                  {/* Background for category header */}
+                {/* Vertical category label along the left side */}
+                <g transform={`translate(-${dynamicMargin.left - 15}, ${middleY})`}>
+                  {/* Background for vertical category label */}
                   <rect
-                    x={0}
-                    y={0}
-                    width={totalColsWidth}
-                    height={20}
+                    x={-fontSizes.geneName * 3}
+                    y={-categoryHeight / 2}
+                    width={fontSizes.geneName * 3}
+                    height={categoryHeight}
                     fill={categoryColor}
                     stroke="#888"
                     strokeWidth="1"
                     rx={3}
                   />
                   
-                  {/* Category name and gene count */}
+                  {/* Rotated category name */}
                   <text
-                    x={10}
-                    y={14}
+                    transform={`rotate(-90)`}
+                    x={-categoryHeight / 2}
+                    y={-fontSizes.geneName}
+                    textAnchor="middle"
                     fontWeight="bold"
                     fontSize={`${fontSizes.geneName}px`}
                     fill="#333"
                   >
-                    {category} ({genesInCategory} genes)
+                    {category} ({genesInCategory})
                   </text>
                 </g>
                 
                 {/* Add a subtle background for the entire category group */}
                 <rect
                   x={0}
-                  y={yPosition}
+                  y={yStart}
                   width={totalColsWidth}
-                  height={genesInCategory * cellHeight}
+                  height={categoryHeight}
                   fill={categoryColor}
                   fillOpacity="0.1"
                   stroke="none"
