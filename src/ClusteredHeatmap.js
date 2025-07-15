@@ -780,56 +780,49 @@ borderRadius: 8, padding: '14px 20px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', 
             const genesInCategory = data.genes.filter(gene => gene.category === category).length;
             
             // Position the category label above the first gene in the group
-            const yPosition = firstGeneIndex * cellHeight - cellHeight * 0.5;
+            const yPosition = firstGeneIndex * cellHeight;
             
             // Get background color for this category
             const categoryColor = getCategoryColor(category);
             
             return (
-              <g key={`cat-label-${categoryIndex}`} transform={`translate(-${dynamicMargin.left - 10}, ${yPosition})`}>
-                {/* Background for category label */}
-                <rect
-                  x={-10}
-                  y={-fontSizes.geneName - 5}
-                  width={dynamicMargin.left + totalColsWidth}
-                  height={fontSizes.geneName * 2 + 25}
-                  fill={categoryColor}
-                  stroke="#ccc"
-                  strokeWidth="0.5"
-                />
-                
-                {/* Category name */}
-                <text
-                  x={0}
-                  y={0}
-                  fontWeight="bold"
-                  fontSize={`${fontSizes.geneName}px`}
-                  fill="#222"
-                >
-                  {category}
-                </text>
-                {/* Gene count */}
-                <text
-                  x={0}
-                  y={fontSizes.geneName + 14}
-                  fontSize={`${Math.max(fontSizes.geneName - 2, 10)}px`}
-                  fill="#666"
-                >
-                  ({genesInCategory} genes)
-                </text>
-                
-                {/* Add a horizontal separator line */}
-                {categoryIndex > 0 && (
-                  <line
-                    x1={-10}
-                    y1={-cellHeight * 0.3}
-                    x2={dynamicMargin.left + totalColsWidth}
-                    y2={-cellHeight * 0.3}
-                    stroke="#000"
+              <g key={`cat-label-${categoryIndex}`}>
+                {/* Category header - positioned above the gene group */}
+                <g transform={`translate(0, ${yPosition - 20})`}>
+                  {/* Background for category header */}
+                  <rect
+                    x={0}
+                    y={0}
+                    width={totalColsWidth}
+                    height={20}
+                    fill={categoryColor}
+                    stroke="#888"
                     strokeWidth="1"
-                    strokeDasharray="5,5"
+                    rx={3}
                   />
-                )}
+                  
+                  {/* Category name and gene count */}
+                  <text
+                    x={10}
+                    y={14}
+                    fontWeight="bold"
+                    fontSize={`${fontSizes.geneName}px`}
+                    fill="#333"
+                  >
+                    {category} ({genesInCategory} genes)
+                  </text>
+                </g>
+                
+                {/* Add a subtle background for the entire category group */}
+                <rect
+                  x={0}
+                  y={yPosition}
+                  width={totalColsWidth}
+                  height={genesInCategory * cellHeight}
+                  fill={categoryColor}
+                  fillOpacity="0.1"
+                  stroke="none"
+                />
               </g>
             );
           })}
