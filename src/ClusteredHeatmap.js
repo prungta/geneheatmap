@@ -296,12 +296,18 @@ const ClusteredHeatmap = () => {
       
       // Debug: log all gene IDs after processing
       console.log('All processed gene IDs:', geneData.map(g => g.id));
+      
+      // Extract unique categories for category labels
+      const uniqueCategories = Array.from(new Set(sortedGeneData.map(gene => gene.category)));
+      console.log('Categories:', uniqueCategories);
+      
       setData({
         genes: sortedGeneData,
         comparisons: shortNames,
         comparisonColumns: comparisons,
         pValueColumns: pValueColumns,
-        categoryGroups: categoryGroups
+        categoryGroups: categoryGroups,
+        categories: uniqueCategories
       });
       
       setLoading(false);
