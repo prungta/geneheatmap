@@ -4,6 +4,31 @@ import * as XLSX from 'xlsx';
 import { Card, Typography, Button, Box, Grid, Paper, Slider, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 
 const ClusteredHeatmap = () => {
+  // ... existing state declarations ...
+  const [colWidthsState, setColWidthsState] = useState(null); // null until data loaded
+  // ... other state ...
+
+  // Initialize column widths state if not set or if column count changed
+  React.useEffect(() => {
+    if (data && (!colWidthsState || colWidthsState.length !== (data.comparisons?.length || 0))) {
+      // Recompute colWidthsRaw using current font sizes and data
+      const headerFont = `bold ${fontSizes.header}px Arial`;
+      const cellFont = `${fontSizes.foldChange}px Arial`;
+      const minColWidth = 50;
+      const colWidthsRaw = data.comparisons.map((comparison, j) => {
+        let maxWidth = measureTextWidth(comparison, headerFont);
+        data.genes.forEach(gene => {
+          const value = gene.values[j];
+          const text = value !== undefined && value !== null ? value.toFixed(1) : "N/A";
+          maxWidth = Math.max(maxWidth, measureTextWidth(text, cellFont));
+        });
+        return Math.ceil(Math.max(maxWidth + 18, minColWidth));
+      });
+      setColWidthsState([...colWidthsRaw]);
+    }
+    // eslint-disable-next-line
+  }, [data && data.comparisons?.length, fontSizes.header, fontSizes.foldChange]);
+
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -15,7 +40,6 @@ const ClusteredHeatmap = () => {
     header: 11       // Default font size for headers
   });
   const [selectedCells, setSelectedCells] = useState([]); // [{row, col}]
-  const [colWidthsState, setColWidthsState] = useState(null); // null until data loaded
   const resizingCol = useRef(null); // Track which column is being resized
   const startX = useRef(null); // Track mouse X position on resize start
   const startWidth = useRef(null); // Track initial width on resize start
@@ -456,16 +480,14 @@ const renderHeatmap = () => {
     return Math.ceil(Math.max(maxWidth + 18, minColWidth));
   });
 
-  // Initialize column widths state if not set or if column count changed
-  React.useEffect(() => {
-    if (data && (!colWidthsState || colWidthsState.length !== data.comparisons.length)) {
-      setColWidthsState([...colWidthsRaw]);
-    }
-    // eslint-disable-next-line
-  }, [data && data.comparisons.length, fontSizes.header, fontSizes.foldChange]);
-
   // Use state for column widths if available
   const colWidths = colWidthsState || colWidthsRaw;
+
+// --- Place this effect in the main component, not inside renderHeatmap ---
+// (Move this block to the top-level ClusteredHeatmap body, after state declarations)
+
+// --- END ---
+
 
   // Compute x positions for each column
   const colX = colWidths.reduce((acc, w, i) => {
