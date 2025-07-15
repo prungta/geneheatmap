@@ -4,6 +4,8 @@ import * as XLSX from 'xlsx';
 import { Card, Typography, Button, Box, Grid, Paper, Slider, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 
 const ClusteredHeatmap = () => {
+  // Toggle for showing/hiding fold change values
+  const [showFoldChange, setShowFoldChange] = useState(true);
   // ... existing state declarations ...
   const [colWidthsState, setColWidthsState] = useState(null); // null until data loaded
   // ... other state ...
@@ -916,16 +918,18 @@ borderRadius: 8, padding: '14px 20px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', 
                       onMouseOver={e => handleMouseOver(e, gene, j, i)}
                       onMouseOut={handleMouseOut}
                     />
-                    <text
-                      x={colWidths[j] / 2}
-                      y={cellHeight / 2 + 4}
-                      textAnchor="middle"
-                      fontSize={`${fontSizes.foldChange}px`}
-                      fontWeight={isSignificant ? "bold" : "normal"}
-                      fill={Math.abs(value) > 1.5 ? "white" : "black"}
-                    >
-                      {value !== undefined && value !== null ? value.toFixed(1) : "N/A"}
-                    </text>
+                    {showFoldChange && (
+                      <text
+                        x={colWidths[j] / 2}
+                        y={cellHeight / 2 + 4}
+                        textAnchor="middle"
+                        fontSize={`${fontSizes.foldChange}px`}
+                        fontWeight={isSignificant ? "bold" : "normal"}
+                        fill={Math.abs(value) > 1.5 ? "white" : "black"}
+                      >
+                        {value !== undefined && value !== null ? value.toFixed(1) : "N/A"}
+                      </text>
+                    )}
                     {(isSignificant || isMarginal) && (
                       <circle
                         cx={colWidths[j] - 15}
@@ -1034,12 +1038,22 @@ borderRadius: 8, padding: '14px 20px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', 
         </Box>
       )}
 
+      {/* Fold Change Toggle */}
+      <Box sx={{ mb: 2 }}>
+        <Button
+          variant={showFoldChange ? 'contained' : 'outlined'}
+          color={showFoldChange ? 'primary' : 'secondary'}
+          onClick={() => setShowFoldChange(v => !v)}
+          sx={{ minWidth: 160 }}
+        >
+          {showFoldChange ? 'Hide Fold Change Values' : 'Show Fold Change Values'}
+        </Button>
+      </Box>
+
       {/* Main Content: Heatmap, Buttons, Legend */}
       {data && (
         <>
           {renderHeatmap()}
-
-          {/* Export buttons */}
           <Grid container spacing={2} justifyContent="center" sx={{ mt: 2 }}>
             <Grid item>
               <Button variant="contained" color="primary" onClick={downloadAsSVG}>
