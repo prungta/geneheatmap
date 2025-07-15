@@ -376,7 +376,17 @@ const ClusteredHeatmap = () => {
 
   // Default cell dimensions
   const cellHeight = Math.max(30, fontSizes.geneName + 10); // Ensure cell height is at least 10px larger than gene name font
-  const margin = { top: 100, right: 200, bottom: 50, left: 200 }; // Increased right margin to prevent legend clipping
+  
+  // Calculate left margin based only on gene name width
+  const geneNameFont = `${fontSizes.geneName}px Arial`;
+  let maxGeneNameWidth = 100; // Default if no data
+  if (data && data.genes && data.genes.length > 0) {
+    // Find the maximum width of gene names
+    maxGeneNameWidth = Math.max(...data.genes.map(gene => {
+      return measureTextWidth(gene.id, geneNameFont);
+    }));
+  }
+  const margin = { top: 100, right: 200, bottom: 50, left: Math.max(100, maxGeneNameWidth + 30) };
 
 
 
@@ -387,20 +397,21 @@ const ClusteredHeatmap = () => {
     return 3; // for p-values between 0.01 and 0.05
   };
 
-  // Function to format category labels with line breaks where requested
-  const formatCategoryLabel = (category) => {
-    if (category === "Triglyceride Metabolism") {
-      return ["Triglyceride", "Metabolism"];
-    } else if (category === "Carbohydrate Metabolism") {
-      return ["Carbohydrate", "Metabolism"];
-    } else if (category === "Cholesterol Metabolism") {
-      return ["Cholesterol", "Metabolism"];
-    } else if (category === "Phospholipid Metabolism") {
-      return ["Phospholipid", "Metabolism"];
-    } else if (category === "RNA Processing/Neurodegeneration") {
-      return ["RNA Processing/", "Neurodegeneration"];
+  // Function to get background color for a category
+  const getCategoryColor = (category) => {
+    // Color code the category groups
+    if (category.includes("Cholesterol")) {
+      return "#e6f7ff"; // light blue
+    } else if (category.includes("Fatty Acid")) {
+      return "#e6ffe6"; // light green
+    } else if (category.includes("Triglyceride")) {
+      return "#fff2e6"; // light orange
+    } else if (category.includes("Immune")) {
+      return "#ffe6e6"; // light red
+    } else if (category.includes("Carbohydrate")) {
+      return "#f9f9e6"; // light yellow
     } else {
-      return [category];
+      return "#f0f0f0"; // default light gray
     }
   };
 
@@ -755,62 +766,61 @@ borderRadius: 8, padding: '14px 20px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', 
               <text x={140} y={0} fontSize="11px">p &lt; 0.05</text>
             </g>
           </g>
-          {/* Category groups */}
-          {data.categoryGroups.map((group, groupIndex) => {
-            const groupY = group.startIndex * cellHeight;
-            // Color code the category groups
-            let groupColor = "#f0f0f0"; // default light gray
-            if (group.category.includes("Cholesterol")) {
-              groupColor = "#e6f7ff"; // light blue
-            } else if (group.category.includes("Fatty Acid")) {
-              groupColor = "#e6ffe6"; // light green
-            } else if (group.category.includes("Triglyceride")) {
-              groupColor = "#fff2e6"; // light orange
-            } else if (group.category.includes("Immune")) {
-              groupColor = "#ffe6e6"; // light red
-            } else if (group.category.includes("Carbohydrate")) {
-              groupColor = "#f9f9e6"; // light yellow
-            }
-            const categoryLines = formatCategoryLabel(group.category);
+          {/* Category labels above each group */}
+          {data.categories && data.categories.map((category, categoryIndex) => {
+            // Find the first gene with this category
+            const firstGeneIndex = data.genes.findIndex(gene => gene.category === category);
+            if (firstGeneIndex === -1) return null; // Skip if no genes in this category
+            
+            // Count genes in this category
+            const genesInCategory = data.genes.filter(gene => gene.category === category).length;
+            
+            // Position the category label above the first gene in the group
+            const yPosition = firstGeneIndex * cellHeight - cellHeight * 0.5;
+            
+            // Get background color for this category
+            const categoryColor = getCategoryColor(category);
+            
             return (
-              <g key={`group-${groupIndex}`}>
-                {/* Group background and label */}
+              <g key={`cat-label-${categoryIndex}`} transform={`translate(-${margin.left - 10}, ${yPosition})`}>
+                {/* Background for category label */}
                 <rect
-                  x={-margin.left}
-                  y={groupY}
-                  width={margin.left - 5}
-                  height={group.count * cellHeight}
-                  fill={groupColor}
+                  x={-10}
+                  y={-fontSizes.geneName - 5}
+                  width={margin.left + totalColsWidth}
+                  height={fontSizes.geneName * 2 + 25}
+                  fill={categoryColor}
                   stroke="#ccc"
+                  strokeWidth="0.5"
                 />
-                {/* Render category with line breaks if needed */}
-                {categoryLines.map((line, lineIndex) => (
-                  <text
-                    key={`category-line-${lineIndex}`}
-                    x={-margin.left + 5}
-                    y={groupY + 15 + (lineIndex * 15)}
-                    fontWeight="bold"
-                    fontSize="12px"
-                    fill="#333"
-                  >
-                    {line}
-                  </text>
-                ))}
+                
+                {/* Category name */}
                 <text
-                  x={-margin.left + 5}
-                  y={groupY + 15 + (categoryLines.length * 15)}
-                  fontSize="10px"
+                  x={0}
+                  y={0}
+                  fontWeight="bold"
+                  fontSize={`${fontSizes.geneName}px`}
+                  fill="#222"
+                >
+                  {category}
+                </text>
+                {/* Gene count */}
+                <text
+                  x={0}
+                  y={fontSizes.geneName + 14}
+                  fontSize={`${Math.max(fontSizes.geneName - 2, 10)}px`}
                   fill="#666"
                 >
-                  ({group.count} genes)
+                  ({genesInCategory} genes)
                 </text>
-                {/* Group separator */}
-                {groupIndex > 0 && (
+                
+                {/* Add a horizontal separator line */}
+                {categoryIndex > 0 && (
                   <line
-                    x1={-margin.left}
-                    y1={groupY - 2}
-                    x2={totalColsWidth}
-                    y2={groupY - 2}
+                    x1={-10}
+                    y1={-cellHeight * 0.3}
+                    x2={margin.left + totalColsWidth}
+                    y2={-cellHeight * 0.3}
                     stroke="#000"
                     strokeWidth="1"
                     strokeDasharray="5,5"
