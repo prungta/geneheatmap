@@ -790,12 +790,12 @@ borderRadius: 8, padding: '14px 20px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', 
             return (
               <g key={`cat-label-${categoryIndex}`}>
                 {/* Vertical category label along the left side */}
-                <g transform={`translate(-${dynamicMargin.left - 15}, ${middleY})`}>
+                <g transform={`translate(-${dynamicMargin.left / 2}, ${middleY})`}>
                   {/* Background for vertical category label */}
                   <rect
-                    x={-fontSizes.geneName * 3}
+                    x={-fontSizes.geneName * 2}
                     y={-categoryHeight / 2}
-                    width={fontSizes.geneName * 3}
+                    width={fontSizes.geneName * 4}
                     height={categoryHeight}
                     fill={categoryColor}
                     stroke="#888"
@@ -806,9 +806,10 @@ borderRadius: 8, padding: '14px 20px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', 
                   {/* Rotated category name */}
                   <text
                     transform={`rotate(-90)`}
-                    x={-categoryHeight / 2}
-                    y={-fontSizes.geneName}
+                    x={0}
+                    y={0}
                     textAnchor="middle"
+                    dominantBaseline="middle"
                     fontWeight="bold"
                     fontSize={`${fontSizes.geneName}px`}
                     fill="#333"
