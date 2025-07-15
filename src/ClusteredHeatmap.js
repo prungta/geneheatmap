@@ -165,7 +165,8 @@ const ClusteredHeatmap = () => {
         
         // Check for required data
         if (!geneId) {
-          missingGenes.push(`Row ${index + 2}: Missing Gene ID`);
+          console.warn(`Row ${index + 2}: Missing Gene ID`);
+          console.log('Problematic row data:', gene);
           return;
         }
         
