@@ -161,11 +161,12 @@ const ClusteredHeatmap = () => {
       const missingGenes = [];
       
       rawData.forEach((gene, index) => {
-        const geneId = gene['Gene ID'] || gene['GeneID'] || gene['gene_id'] || `Row_${index + 2}`; // +2 for 1-based index + header
-        
-        // Check for required data
+        // Only accept rows with a valid gene ID (not empty/whitespace)
+        let geneId = gene['Gene ID'] || gene['GeneID'] || gene['gene_id'];
+        if (typeof geneId === 'string') geneId = geneId.trim();
+        // Skip rows without a valid gene ID
         if (!geneId) {
-          console.warn(`Row ${index + 2}: Missing Gene ID`);
+          console.warn(`Skipping row ${index + 2}: Missing or blank Gene ID`);
           console.log('Problematic row data:', gene);
           return;
         }
@@ -263,6 +264,8 @@ const ClusteredHeatmap = () => {
         });
       }
       
+      // Debug: log all gene IDs after processing
+      console.log('All processed gene IDs:', geneData.map(g => g.id));
       setData({
         genes: sortedGeneData,
         comparisons: shortNames,
