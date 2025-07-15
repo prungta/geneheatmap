@@ -811,14 +811,15 @@ borderRadius: 8, padding: '14px 20px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', 
                     // Calculate positions based on first and last gene in category
                     const yStart = firstGeneIndex * cellHeight;
                     
-                    // Gap between gene names and category box
-                    const gap = 5;
-                    
                     // Width of the category box (vertical height when rotated)
                     const boxWidth = 30;
                     
-                    // Position to align with gene names
-                    const xPosition = -gap;
+                    // Calculate position to ensure category box stays left of gene names
+                    // We use dynamicMargin.left which already accounts for the longest gene name
+                    // Add a small gap (10px) between category boxes and gene names
+                    // This ensures the category box is positioned correctly regardless of gene name size
+                    const gap = 10;
+                    const xPosition = -dynamicMargin.left + gap;
                     
                     // Combine category name and count
                     const labelText = `${category} (${genesInCategory})`;
@@ -843,7 +844,7 @@ borderRadius: 8, padding: '14px 20px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', 
                       <>
                         {/* Vertical background box aligned with first and last gene */}
                         <rect
-                          x={xPosition - boxWidth}
+                          x={xPosition}
                           y={yStart}
                           width={boxWidth}
                           height={categoryHeight}
@@ -855,7 +856,7 @@ borderRadius: 8, padding: '14px 20px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', 
                         
                         {/* Rotated category text centered in the box */}
                         <text
-                          transform={`translate(${xPosition - boxWidth/2}, ${yStart + categoryHeight/2}) rotate(-90)`}
+                          transform={`translate(${xPosition + boxWidth/2}, ${yStart + categoryHeight/2}) rotate(-90)`}
                           textAnchor="middle"
                           dominantBaseline="middle"
                           fontWeight="bold"
