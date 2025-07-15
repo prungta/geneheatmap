@@ -697,26 +697,28 @@ borderRadius: 8, padding: '14px 20px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', 
                     </tspan>
                   ))}
                 </text>
-              {/* Resizer handle */}
-              <rect
-                x={colWidths[j] - 6}
-                y={-35}
-                width={8}
-                height={cellHeight * data.genes.length + 40}
-                fill="transparent"
-                style={{ cursor: 'col-resize' }}
-                onMouseDown={e => handleResizerMouseDown(e, j)}
-              />
-              <rect
-                x={colWidths[j] - 3}
-                y={-35}
-                width={2}
-                height={cellHeight * data.genes.length + 40}
-                fill="#b0b0b0"
-                pointerEvents="none"
-              />
-            </g>
-          ))}
+                {/* Resizer handle */}
+                <rect
+                  x={colWidths[j] - 6}
+                  y={-35}
+                  width={8}
+                  height={cellHeight * data.genes.length + 40}
+                  fill="transparent"
+                  style={{ cursor: 'col-resize' }}
+                  onMouseDown={e => handleResizerMouseDown(e, j)}
+                />
+                <rect
+                  x={colWidths[j] - 3}
+                  y={-35}
+                  width={2}
+                  height={cellHeight * data.genes.length + 40}
+                  fill="#b0b0b0"
+                  pointerEvents="none"
+                />
+              </g>
+            );
+          })}
+
           {/* Legend - moved up slightly */}
           <g transform={`translate(0, ${-75})`}>
             <text x={0} y={0} fontWeight="bold" fontSize="13px">Legend:</text>
