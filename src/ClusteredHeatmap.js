@@ -40,29 +40,96 @@ const ClusteredHeatmap = () => {
   // Handle file upload
   const handleFileUpload = (event) => {
     const selectedFile = event.target.files[0];
-    if (selectedFile) {
-      setFile(selectedFile);
-      setLoading(true);
-      processExcelFile(selectedFile);
+    if (!selectedFile) {
+      setError('No file selected');
+      return;
     }
+
+    // Reset states
+    setError(null);
+    setFile(selectedFile);
+    setLoading(true);
+    
+    // Log file info for debugging
+    console.log('Processing file:', {
+      name: selectedFile.name,
+      size: selectedFile.size,
+      type: selectedFile.type
+    });
+
+    // Basic file validation
+    if (!selectedFile.name.match(/\.(xlsx|xls)$/i)) {
+      const errorMsg = 'Invalid file type. Please upload an Excel file (.xlsx or .xls)';
+      console.error(errorMsg);
+      setError(errorMsg);
+      setLoading(false);
+      return;
+    }
+
+    if (selectedFile.size > 10 * 1024 * 1024) { // 10MB limit
+      const errorMsg = 'File is too large. Maximum size is 10MB';
+      console.error(errorMsg);
+      setError(errorMsg);
+      setLoading(false);
+      return;
+    }
+
+    processExcelFile(selectedFile).catch(error => {
+      console.error('Error processing file:', error);
+      setError(`Error processing file: ${error.message || 'Unknown error'}`);
+      setLoading(false);
+    });
   };
 
-  // Process the Excel file
+  // Process the Excel file with enhanced error handling
   const processExcelFile = async (selectedFile) => {
+    if (!selectedFile) {
+      throw new Error('No file provided');
+    }
     try {
-      // Read the Excel file
+      console.log('Reading Excel file...');
       const arrayBuffer = await selectedFile.arrayBuffer();
-      const workbook = XLSX.read(new Uint8Array(arrayBuffer), { cellDates: true });
-      const sheet = workbook.Sheets[workbook.SheetNames[0]];
-      const rawData = XLSX.utils.sheet_to_json(sheet);
+      let workbook, sheet, rawData;
       
-      // Dynamically detect comparison and p-value columns from the headers
+      try {
+        workbook = XLSX.read(new Uint8Array(arrayBuffer), { cellDates: true });
+        if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
+          throw new Error('No sheets found in the Excel file');
+        }
+        
+        sheet = workbook.Sheets[workbook.SheetNames[0]];
+        if (!sheet) {
+          throw new Error('Could not read the first sheet');
+        }
+        
+        rawData = XLSX.utils.sheet_to_json(sheet);
+        if (!rawData || rawData.length === 0) {
+          throw new Error('No data found in the sheet');
+        }
+        
+        console.log(`Successfully read ${rawData.length} rows of data`);
+      } catch (err) {
+        console.error('Error reading Excel file:', err);
+        throw new Error(`Failed to read Excel file: ${err.message}`);
+      }
+      
+      // Validate and extract headers
       const headers = Object.keys(rawData[0] || {});
+      if (headers.length === 0) {
+        throw new Error('No headers found in the Excel file');
+      }
+      
+      console.log('Detected headers:', headers);
+      
       const comparisonPattern = /^Log2FC\s*\((.+)\)$/i;
       const pValuePattern = /^P value\s*\((.+)\)$/i;
       
       // Find all comparison columns and their display names
       const comparisons = headers.filter(h => comparisonPattern.test(h));
+      if (comparisons.length === 0) {
+        throw new Error('No comparison columns found. Expected columns with pattern: "Log2FC (ComparisonName)"');
+      }
+      
       const shortNames = comparisons.map(h => {
         const match = h.match(comparisonPattern);
         return match ? match[1].trim() : h;
@@ -70,34 +137,84 @@ const ClusteredHeatmap = () => {
       
       // Find all p-value columns
       const pValueColumns = headers.filter(h => pValuePattern.test(h));
+      if (pValueColumns.length === 0) {
+        console.warn('No p-value columns found with pattern: "P value (ComparisonName)"');
+      }
       
       // Dynamically determine the category column
       const categoryCol = headers.find(h => h.toLowerCase().includes('category'));
+      if (!categoryCol) {
+        console.warn('No category column found. Using "Uncategorized" for all genes');
+      }
       
       // Sort comparisons and p-values by their order in the file
       // (Optional: you can sort by display name if you prefer)
       // If you want to pair Log2FC and P value columns by their inner comparison, you can add extra logic here.
       
-      // Process gene data
-      const geneData = rawData.map(gene => {
-        return {
-          id: gene['Gene ID'],
+      // Process gene data with validation
+      const geneData = [];
+      const missingGenes = [];
+      
+      rawData.forEach((gene, index) => {
+        const geneId = gene['Gene ID'] || gene['GeneID'] || gene['gene_id'] || `Row_${index + 2}`; // +2 for 1-based index + header
+        
+        // Check for required data
+        if (!geneId) {
+          missingGenes.push(`Row ${index + 2}: Missing Gene ID`);
+          return;
+        }
+        
+        // Check for at least one valid value
+        const hasValidValue = comparisons.some(comp => {
+          const val = gene[comp];
+          return val !== undefined && val !== null && val !== '';
+        });
+        
+        if (!hasValidValue) {
+          console.warn(`Gene ${geneId} has no valid comparison values`);
+        }
+        
+        geneData.push({
+          id: geneId,
           category: gene[categoryCol] || 'Uncategorized',
-          values: comparisons.map(comp => gene[comp]),
-          pValues: pValueColumns.map(comp => gene[comp])
-        };
+          values: comparisons.map(comp => {
+            const val = gene[comp];
+            return val !== undefined && val !== null && val !== '' ? parseFloat(val) : null;
+          }),
+          pValues: pValueColumns.map(comp => {
+            const val = gene[comp];
+            return val !== undefined && val !== null && val !== '' ? parseFloat(val) : null;
+          })
+        });
       });
+      
+      if (geneData.length === 0) {
+        throw new Error('No valid gene data found in the file');
+      }
+      
+      if (missingGenes.length > 0) {
+        console.warn(`Missing Gene IDs in ${missingGenes.length} rows`);
+        if (missingGenes.length === rawData.length) {
+          throw new Error('No valid Gene IDs found in the file');
+        }
+      }
       
       // Group genes by category
       const categories = [...new Set(geneData.map(gene => gene.category))];
       const groupedByCategory = {};
       categories.forEach(category => {
-        groupedByCategory[category] = geneData.filter(gene => gene.category === category);
+        const genesInCategory = geneData.filter(gene => gene.category === category);
+        if (genesInCategory.length > 0) {
+          groupedByCategory[category] = genesInCategory;
+        }
       });
       
-      // Sort genes within each category from lowest to highest log2FC in Control vs KD
+      console.log(`Processed ${geneData.length} genes across ${categories.length} categories`);
+      
+      // Sort genes within each category from lowest to highest log2FC in the first comparison
       const sortedGeneData = [];
       categories.forEach(category => {
+        if (!groupedByCategory[category]) return;
         const categoryGenes = groupedByCategory[category];
         
         // Sort genes within category from lowest to highest log2FC in first comparison
