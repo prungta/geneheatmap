@@ -15,9 +15,10 @@ const ClusteredHeatmap = () => {
   const [file, setFile] = useState(null);
   const [colorScaleType, setColorScaleType] = useState('linear'); // linear, log, quantile
   const [fontSizes, setFontSizes] = useState({
-    geneName: 11,    // Default font size for gene names
-    foldChange: 10,  // Default font size for fold change values
-    header: 11       // Default font size for headers
+    geneName: 12,
+    header: 12,
+    cellValue: 12,
+    categoryName: 12
   });
 
   // Initialize column widths state if not set or if column count changed
@@ -602,6 +603,21 @@ max={20}
 />
 </Grid>
 <Grid item xs={12} sm={6} md={4}>
+<Typography id="category-name-slider" gutterBottom sx={{ fontSize: '0.875rem' }}>
+Category Name Size: {fontSizes.categoryName}px
+</Typography>
+<Slider
+value={fontSizes.categoryName}
+onChange={(e, value) => setFontSizes(prev => ({ ...prev, categoryName: value }))}
+aria-labelledby="category-name-slider"
+valueLabelDisplay="auto"
+step={1}
+marks
+min={8}
+max={20}
+/>
+</Grid>
+<Grid item xs={12} sm={6} md={4}>
 <FormControl fullWidth size="small" variant="outlined">
 <InputLabel id="color-scale-label">Color Scale</InputLabel>
 <Select
@@ -789,51 +805,63 @@ borderRadius: 8, padding: '14px 20px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', 
             
             return (
               <g key={`cat-label-${categoryIndex}`}>
-                {/* Vertical category label along the left side - positioned to align with gene names */}
-                <g transform={`translate(-5, ${middleY})`}>
-                  {/* Function to measure and render the category label */}
+                {/* Vertical category box aligned with first and last gene */}
+                <g>
+                  {/* Function to render vertical category box and label */}
                   {(() => {
-                    // Combine category name and count on the same line
+                    // Calculate positions based on first and last gene in category
+                    const yStart = firstGeneIndex * cellHeight;
+                    const yEnd = yStart + categoryHeight;
+                    
+                    // Gap between gene names and category box
+                    const gap = 5;
+                    
+                    // Width of the category box (vertical height when rotated)
+                    const boxWidth = 30;
+                    
+                    // Position to align with gene names
+                    const xPosition = -gap;
+                    
+                    // Combine category name and count
                     const labelText = `${category} (${genesInCategory})`;
                     
-                    // Calculate text width for proper background sizing
+                    // Calculate text width for proper font sizing
                     const canvas = document.createElement('canvas');
                     const context = canvas.getContext('2d');
-                    context.font = `bold ${fontSizes.geneName}px Arial`;
+                    context.font = `bold ${fontSizes.categoryName}px Arial`;
                     const textWidth = context.measureText(labelText).width;
                     
-                    // Calculate proper dimensions for the background
-                    const padding = fontSizes.geneName * 0.5;
-                    const boxHeight = fontSizes.geneName * 1.5;
-                    const boxWidth = textWidth + padding * 2;
+                    // Calculate if text fits in the box
+                    const availableSpace = categoryHeight - 10; // 5px padding on each end
                     
-                    // Calculate position to align with gene names
-                    // The -5 ensures a small gap between category label and gene names
-                    const xPosition = -boxWidth - 5;
+                    // Determine appropriate font size to fit text
+                    let fontSize = fontSizes.categoryName;
+                    if (textWidth > availableSpace) {
+                      // Scale down font size to fit
+                      fontSize = Math.max(8, Math.floor(fontSizes.categoryName * (availableSpace / textWidth)));
+                    }
                     
                     return (
                       <>
-                        {/* Background for category label - sized to fit text exactly */}
+                        {/* Vertical background box aligned with first and last gene */}
                         <rect
-                          x={xPosition}
-                          y={-boxHeight/2}
+                          x={xPosition - boxWidth}
+                          y={yStart}
                           width={boxWidth}
-                          height={boxHeight}
+                          height={categoryHeight}
                           fill={categoryColor}
                           stroke="#888"
                           strokeWidth="1"
                           rx={3}
                         />
                         
-                        {/* Category name and count on the same line */}
+                        {/* Rotated category text centered in the box */}
                         <text
-                          transform={`rotate(-90)`}
-                          x={0}
-                          y={xPosition + boxWidth/2}
+                          transform={`translate(${xPosition - boxWidth/2}, ${yStart + categoryHeight/2}) rotate(-90)`}
                           textAnchor="middle"
                           dominantBaseline="middle"
                           fontWeight="bold"
-                          fontSize={`${fontSizes.geneName}px`}
+                          fontSize={`${fontSize}px`}
                           fill="#333"
                         >
                           {labelText}
