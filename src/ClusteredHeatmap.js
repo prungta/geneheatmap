@@ -889,13 +889,6 @@ return (
     </g>
   </>
 );
-                          fill="#333"
-                        >
-                          {labelText}
-                        </text>
-                      </>
-                    );
-                  })()}
                 </g>
                 
                 {/* Add a subtle background for the entire category group */}
