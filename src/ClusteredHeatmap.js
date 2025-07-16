@@ -1096,22 +1096,38 @@ borderRadius: 8, padding: '14px 20px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', 
             </Grid>
           </Grid>
 
-          <Paper elevation={1} sx={{ mt: 4, p: 2, background: '#f9fafb' }}>
-            <Typography variant="subtitle1" fontWeight={600} gutterBottom>
-              Visualization Legend:
-            </Typography>
-            <Box component="ul" sx={{ fontSize: 14, color: 'text.secondary', pl: 3, mb: 0 }}>
-              <li>Genes are grouped by biological process and sorted from lowest to highest log₂FC in the Control vs KD comparison</li>
-              <li>Red indicates upregulation (positive log₂FC), blue indicates downregulation (negative log₂FC)</li>
-              <li>Color intensity corresponds to the magnitude of change</li>
-              <li>Black circles indicate statistical significance (p &lt; 0.05), with size proportional to significance level</li>
-              <li>Larger circles (p &lt; 0.01) indicate higher statistical significance</li>
-            </Box>
-            <Typography sx={{ fontSize: 13, mt: 1 }}>
-              • The heatmap reveals patterns of gene expression changes across different biological processes and experimental conditions<br />
-              • This visualization helps identify coordinated regulation within functional pathways
-            </Typography>
-          </Paper>
+          {/* Spacer for sticky legend */}
+          <Box sx={{ height: 140 }} />
+        </>
+      )}
+    {/* Sticky Legend: Always visible at the bottom */}
+    <Paper elevation={3} sx={{
+      position: 'sticky',
+      bottom: 0,
+      left: 0,
+      width: '100%',
+      zIndex: 100,
+      background: '#f9fafb',
+      p: 2,
+      borderTop: '1px solid #e0e0e0',
+      boxShadow: '0 -2px 8px rgba(0,0,0,0.04)',
+      mt: 0
+    }}>
+      <Typography variant="subtitle1" fontWeight={600} gutterBottom>
+        Visualization Legend:
+      </Typography>
+      <Box component="ul" sx={{ fontSize: 14, color: 'text.secondary', pl: 3, mb: 0 }}>
+        <li>Genes are grouped by biological process and sorted from lowest to highest log₂FC in the Control vs KD comparison</li>
+        <li>Red indicates upregulation (positive log₂FC), blue indicates downregulation (negative log₂FC)</li>
+        <li>Color intensity corresponds to the magnitude of change</li>
+        <li>Black circles indicate statistical significance (p &lt; 0.05), with size proportional to significance level</li>
+        <li>Larger circles (p &lt; 0.01) indicate higher statistical significance</li>
+      </Box>
+      <Typography sx={{ fontSize: 13, mt: 1 }}>
+        • The heatmap reveals patterns of gene expression changes across different biological processes and experimental conditions<br />
+        • This visualization helps identify coordinated regulation within functional pathways
+      </Typography>
+    </Paper>
         </>
       )}
 
