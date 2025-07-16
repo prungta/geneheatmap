@@ -6,7 +6,7 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <h1>Gene Expression Heatmap Visualization</h1>
+        <h1>Khushbu's Gene Expression Visualization Tool</h1>
       </header>
       <main className="container mx-auto py-6 px-4">
         <ClusteredHeatmap />
