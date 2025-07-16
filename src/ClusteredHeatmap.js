@@ -894,8 +894,7 @@ return (
                           stroke="#888"
                           strokeWidth="1"
                           rx={3}
-{{ ... }}
-                        />
+/>
                         
                         {/* Rotated category text centered in the box */}
                         <text
