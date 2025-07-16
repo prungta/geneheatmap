@@ -833,24 +833,25 @@ borderRadius: 8, padding: '14px 20px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', 
                     return lines;
                   }
 
-                  // Find the widest label (after wrapping if needed)
-                  let maxLabelWidth = 0;
+                  // Calculate width for each category label
                   const wrappedCategoryLabels = allCategoryLabels.map(label => {
-                    // Try wrapping at increasing width, up to a reasonable max (e.g. 300px)
+                    // Measure the text width
                     let width = measureTextWidth(label, catFont);
                     let lines = [label];
                     let boxWidth = width + 16; // 8px padding each side
+                    
+                    // Only wrap if text is too long
                     if (width > 120) {
                       // Try wrapping
                       lines = wrapVerticalText(label, 120, catFont);
                       boxWidth = 120 + 16;
                     }
-                    if (boxWidth > maxLabelWidth) maxLabelWidth = boxWidth;
+                    
                     return { label, lines, boxWidth };
                   });
-
-                  // Use the widest box for all
-                  const categoryBoxWidth = maxLabelWidth;
+                  
+                  // Get this category's box width - by default fits its own text
+                  const categoryBoxWidth = wrappedCategoryLabels[categoryIndex].boxWidth;
 
                   // The right edge of the box is always aligned to the left of gene names
                   const categoryBoxRightEdge = -(maxGeneNameWidth + 20);
