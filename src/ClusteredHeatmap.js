@@ -888,21 +888,7 @@ return (
       ))}
     </g>
   </>
-);                    width={boxWidth}
-                          height={categoryHeight}
-                          fill={categoryColor}
-                          stroke="#888"
-                          strokeWidth="1"
-                          rx={3}
-/>
-                        
-                        {/* Rotated category text centered in the box */}
-                        <text
-                          transform={`translate(${xPosition + boxWidth/2}, ${yStart + categoryHeight/2}) rotate(-90)`}
-                          textAnchor="middle"
-                          dominantBaseline="middle"
-                          fontWeight="bold"
-                          fontSize={`${fontSize}px`}
+);
                           fill="#333"
                         >
                           {labelText}
