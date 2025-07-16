@@ -807,89 +807,88 @@ borderRadius: 8, padding: '14px 20px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', 
             return (
               <g key={`cat-label-${categoryIndex}`}>
                 {/* Vertical category box aligned with first and last gene */}
-                <g>
-                  {/* Function to render vertical category box and label */}
-                  {(() => {
-                    // --- CATEGORY LABELS: Dynamic width, left expansion, wrapping ---
-// 1. Compute max width needed for any label (with wrapping if needed)
-const allCategoryLabels = data.categories.map(cat => `${cat} (${data.genes.filter(g => g.category === cat).length})`);
-const catFont = `bold ${fontSizes.categoryName}px Arial`;
-const maxGeneNameWidth = data.genes.length > 0 ? Math.max(...data.genes.map(gene => measureTextWidth(gene.id, geneNameFont))) : 100;
+                {/* Function to render vertical category box and label */}
+                {(() => {
+                  // --- CATEGORY LABELS: Dynamic width, left expansion, wrapping ---
+                  // 1. Compute max width needed for any label (with wrapping if needed)
+                  const allCategoryLabels = data.categories.map(cat => `${cat} (${data.genes.filter(g => g.category === cat).length})`);
+                  const catFont = `bold ${fontSizes.categoryName}px Arial`;
+                  const maxGeneNameWidth = data.genes.length > 0 ? Math.max(...data.genes.map(gene => measureTextWidth(gene.id, geneNameFont))) : 100;
 
-// Helper: wrap vertical text to fit in a given width (for rotated text)
-function wrapVerticalText(text, maxWidth, font) {
-  const words = text.split(' ');
-  const lines = [];
-  let line = '';
-  words.forEach(word => {
-    const testLine = line ? line + ' ' + word : word;
-    if (measureTextWidth(testLine, font) > maxWidth - 8 && line) {
-      lines.push(line);
-      line = word;
-    } else {
-      line = testLine;
-    }
-  });
-  if (line) lines.push(line);
-  return lines;
-}
+                  // Helper: wrap vertical text to fit in a given width (for rotated text)
+                  function wrapVerticalText(text, maxWidth, font) {
+                    const words = text.split(' ');
+                    const lines = [];
+                    let line = '';
+                    words.forEach(word => {
+                      const testLine = line ? line + ' ' + word : word;
+                      if (measureTextWidth(testLine, font) > maxWidth - 8 && line) {
+                        lines.push(line);
+                        line = word;
+                      } else {
+                        line = testLine;
+                      }
+                    });
+                    if (line) lines.push(line);
+                    return lines;
+                  }
 
-// Find the widest label (after wrapping if needed)
-let maxLabelWidth = 0;
-const wrappedCategoryLabels = allCategoryLabels.map(label => {
-  // Try wrapping at increasing width, up to a reasonable max (e.g. 300px)
-  let width = measureTextWidth(label, catFont);
-  let lines = [label];
-  let boxWidth = width + 16; // 8px padding each side
-  if (width > 120) {
-    // Try wrapping
-    lines = wrapVerticalText(label, 120, catFont);
-    boxWidth = 120 + 16;
-  }
-  if (boxWidth > maxLabelWidth) maxLabelWidth = boxWidth;
-  return { label, lines, boxWidth };
-});
+                  // Find the widest label (after wrapping if needed)
+                  let maxLabelWidth = 0;
+                  const wrappedCategoryLabels = allCategoryLabels.map(label => {
+                    // Try wrapping at increasing width, up to a reasonable max (e.g. 300px)
+                    let width = measureTextWidth(label, catFont);
+                    let lines = [label];
+                    let boxWidth = width + 16; // 8px padding each side
+                    if (width > 120) {
+                      // Try wrapping
+                      lines = wrapVerticalText(label, 120, catFont);
+                      boxWidth = 120 + 16;
+                    }
+                    if (boxWidth > maxLabelWidth) maxLabelWidth = boxWidth;
+                    return { label, lines, boxWidth };
+                  });
 
-// Use the widest box for all
-const categoryBoxWidth = maxLabelWidth;
+                  // Use the widest box for all
+                  const categoryBoxWidth = maxLabelWidth;
 
-// The right edge of the box is always aligned to the left of gene names
-const categoryBoxRightEdge = -(maxGeneNameWidth + 20);
-const xPosition = categoryBoxRightEdge - categoryBoxWidth;
+                  // The right edge of the box is always aligned to the left of gene names
+                  const categoryBoxRightEdge = -(maxGeneNameWidth + 20);
+                  const xPosition = categoryBoxRightEdge - categoryBoxWidth;
 
-// For each category, use the same box width and wrapping
-return (
-  <>
-    {/* Vertical background box aligned with first and last gene, expands left */}
-    <rect
-      x={xPosition}
-      y={yStart}
-      width={categoryBoxWidth}
-      height={categoryHeight}
-      fill={categoryColor}
-      stroke="#888"
-      strokeWidth="1"
-      rx={3}
-    />
-    {/* Rotated and wrapped category text, centered in the box */}
-    <g transform={`translate(${xPosition + categoryBoxWidth/2}, ${yStart + categoryHeight/2}) rotate(-90)`}>
-      {wrappedCategoryLabels[categoryIndex].lines.map((line, idx) => (
-        <text
-          key={idx}
-          y={(idx - (wrappedCategoryLabels[categoryIndex].lines.length - 1) / 2) * fontSizes.categoryName * 1.1}
-          textAnchor="middle"
-          dominantBaseline="middle"
-          fontWeight="bold"
-          fontSize={`${fontSizes.categoryName}px`}
-          fill="#333"
-        >
-          {line}
-        </text>
-      ))}
-    </g>
-  </>
-);
-                </g>
+                  // For each category, use the same box width and wrapping
+                  return (
+                    <>
+                      {/* Vertical background box aligned with first and last gene, expands left */}
+                      <rect
+                        x={xPosition}
+                        y={yStart}
+                        width={categoryBoxWidth}
+                        height={categoryHeight}
+                        fill={categoryColor}
+                        stroke="#888"
+                        strokeWidth="1"
+                        rx={3}
+                      />
+                      {/* Rotated and wrapped category text, centered in the box */}
+                      <g transform={`translate(${xPosition + categoryBoxWidth/2}, ${yStart + categoryHeight/2}) rotate(-90)`}>
+                        {wrappedCategoryLabels[categoryIndex].lines.map((line, idx) => (
+                          <text
+                            key={idx}
+                            y={(idx - (wrappedCategoryLabels[categoryIndex].lines.length - 1) / 2) * fontSizes.categoryName * 1.1}
+                            textAnchor="middle"
+                            dominantBaseline="middle"
+                            fontWeight="bold"
+                            fontSize={`${fontSizes.categoryName}px`}
+                            fill="#333"
+                          >
+                            {line}
+                          </text>
+                        ))}
+                      </g>
+                    </>
+                  );
+                })()}
                 
                 {/* Add a subtle background for the entire category group */}
                 <rect
