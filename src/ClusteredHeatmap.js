@@ -838,13 +838,13 @@ borderRadius: 8, padding: '14px 20px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', 
                     // Measure the text width
                     let width = measureTextWidth(label, catFont);
                     let lines = [label];
-                    let boxWidth = width + 16; // 8px padding each side
+                    let boxWidth = width + 8; // 4px padding each side
                     
                     // Only wrap if text is too long
                     if (width > 120) {
                       // Try wrapping
                       lines = wrapVerticalText(label, 120, catFont);
-                      boxWidth = 120 + 16;
+                      boxWidth = 120 + 8;
                     }
                     
                     return { label, lines, boxWidth };
