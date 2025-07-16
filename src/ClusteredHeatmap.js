@@ -1128,28 +1128,27 @@ borderRadius: 8, padding: '14px 20px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', 
         • This visualization helps identify coordinated regulation within functional pathways
       </Typography>
     </Paper>
-        </>
-      )}
 
-      {/* Tooltip overlay */}
-      {tooltip.visible && (
-        <Box
-          sx={{
-            position: 'fixed',
-            left: tooltip.x + 10,
-            top: tooltip.y + 10,
-            background: 'rgba(255,255,255,0.98)',
-            border: '1px solid #ccc',
-            borderRadius: 1.5,
-            p: 1.5,
-            pointerEvents: 'none',
-            zIndex: 10000,
-            boxShadow: 3,
-            minWidth: 200
-          }}
-        >
-          {tooltip.content}
-        </Box>
+    {/* Tooltip overlay */}
+    {tooltip.visible && (
+      <Box
+        sx={{
+          position: 'fixed',
+          left: tooltip.x + 10,
+          top: tooltip.y + 10,
+          background: 'rgba(255,255,255,0.98)',
+          border: '1px solid #ccc',
+          borderRadius: 1.5,
+          p: 1.5,
+          pointerEvents: 'none',
+          zIndex: 10000,
+          boxShadow: 3,
+          minWidth: 200
+        }}
+      >
+        {tooltip.content}
+      </Box>
+    )}
       )}
     </Card>
   </Box>
